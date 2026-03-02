@@ -277,6 +277,7 @@ func ApplyBranchOverrides(db DB, items []WantedSummary, overrides []BranchOverri
 			result = append(result, WantedSummary{
 				ID:          item.ID,
 				Title:       item.Title,
+				Description: item.Description,
 				Project:     item.Project,
 				Type:        item.Type,
 				Priority:    item.Priority,
@@ -494,6 +495,7 @@ func applyDashboardOverrides(db DB, items []WantedSummary, overrides []BranchOve
 		result = append(result, WantedSummary{
 			ID:          item.ID,
 			Title:       item.Title,
+			Description: item.Description,
 			Project:     item.Project,
 			Type:        item.Type,
 			Priority:    item.Priority,
