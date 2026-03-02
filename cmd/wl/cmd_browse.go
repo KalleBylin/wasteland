@@ -166,7 +166,7 @@ func runBrowseLocal(stdout, stderr io.Writer, cfg *federation.Config, filter com
 	if jsonOut {
 		return renderBrowseJSON(stdout, result)
 	}
-	return renderBrowseSummaries(stdout, result)
+	return renderBrowseSummaries(stdout, result, filter.Long)
 }
 
 func runBrowseRemote(stdout, _ io.Writer, cfg *federation.Config, filter commons.BrowseFilter, jsonOut bool) error {
@@ -188,19 +188,24 @@ func runBrowseRemote(stdout, _ io.Writer, cfg *federation.Config, filter commons
 	if jsonOut {
 		return renderBrowseJSON(stdout, result)
 	}
-	return renderBrowseSummaries(stdout, result)
+	return renderBrowseSummaries(stdout, result, filter.Long)
 }
 
-func renderBrowseSummaries(stdout io.Writer, result *sdk.BrowseResult) error {
+func renderBrowseSummaries(stdout io.Writer, result *sdk.BrowseResult, long bool) error {
 	items := result.Items
 	if len(items) == 0 {
 		fmt.Fprintln(stdout, "No wanted items found matching your filters.")
 		return nil
 	}
 
-	tbl := style.NewTable(
-		style.Column{Name: "ID", Width: 12},
-		style.Column{Name: "TITLE", Width: 40},
+	columns := []style.Column{
+		{Name: "ID", Width: 12},
+		{Name: "TITLE", Width: 40},
+	}
+	if long {
+		columns = append(columns, style.Column{Name: "DESCRIPTION", Width: 40})
+	}
+	columns = append(columns,
 		style.Column{Name: "PROJECT", Width: 12},
 		style.Column{Name: "TYPE", Width: 10},
 		style.Column{Name: "PRI", Width: 4, Align: style.AlignRight},
@@ -209,9 +214,15 @@ func renderBrowseSummaries(stdout io.Writer, result *sdk.BrowseResult) error {
 		style.Column{Name: "EFFORT", Width: 8},
 	)
 
+	tbl := style.NewTable(columns...)
+
 	for _, item := range items {
 		pri := wlFormatPriority(fmt.Sprintf("%d", item.Priority))
-		tbl.AddRow(item.ID, item.Title, item.Project, item.Type, pri, item.PostedBy, item.Status, item.EffortLevel)
+		if long {
+			tbl.AddRow(item.ID, item.Title, item.Description, item.Project, item.Type, pri, item.PostedBy, item.Status, item.EffortLevel)
+		} else {
+			tbl.AddRow(item.ID, item.Title, item.Project, item.Type, pri, item.PostedBy, item.Status, item.EffortLevel)
+		}
 	}
 
 	fmt.Fprintf(stdout, "Wanted items (%d):\n\n", len(items))
