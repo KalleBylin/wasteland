@@ -1,93 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"strings"
 	"testing"
-
-	"github.com/julianknutsen/wasteland/internal/commons"
 )
 
-func TestPostWanted_Success(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-
-	item := &commons.WantedItem{
-		ID:          "w-test123",
-		Title:       "Fix auth bug",
-		Description: "Auth is broken",
-		Project:     "gastown",
-		Type:        "bug",
-		Priority:    1,
-		Tags:        []string{"auth", "urgent"},
-		PostedBy:    "my-rig",
-		EffortLevel: "small",
-	}
-
-	if err := postWanted(store, item); err != nil {
-		t.Fatalf("postWanted() error: %v", err)
-	}
-
-	got, err := store.QueryWanted("w-test123")
-	if err != nil {
-		t.Fatalf("QueryWanted() error: %v", err)
-	}
-	if got.Title != "Fix auth bug" {
-		t.Errorf("Title = %q, want %q", got.Title, "Fix auth bug")
-	}
-	if got.Status != "open" {
-		t.Errorf("Status = %q, want %q", got.Status, "open")
-	}
-}
-
-func TestPostWanted_EmptyID(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-
-	item := &commons.WantedItem{
-		ID:    "",
-		Title: "Some title",
-	}
-
-	err := postWanted(store, item)
-	if err == nil {
-		t.Fatal("postWanted() expected error for empty ID")
-	}
-}
-
-func TestPostWanted_EmptyTitle(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-
-	item := &commons.WantedItem{
-		ID:    "w-test",
-		Title: "",
-	}
-
-	err := postWanted(store, item)
-	if err == nil {
-		t.Fatal("postWanted() expected error for empty title")
-	}
-}
-
-func TestPostWanted_InsertFails(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	store.InsertWantedErr = fmt.Errorf("database write error")
-
-	item := &commons.WantedItem{
-		ID:    "w-test",
-		Title: "Test item",
-	}
-
-	err := postWanted(store, item)
-	if err == nil {
-		t.Fatal("postWanted() expected error when InsertWanted fails")
-	}
-	if !strings.Contains(err.Error(), "database write error") {
-		t.Errorf("error = %q, want to contain 'database write error'", err.Error())
-	}
-}
+// Business logic tests for posting moved to internal/sdk/ (sdk_test.go, lifecycle_test.go).
 
 func TestValidatePostInputs_ValidType(t *testing.T) {
 	t.Parallel()

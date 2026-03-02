@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/inference"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
@@ -58,101 +57,85 @@ func runInferRun(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPus
 		return err
 	}
 
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	completionID, err := executeInferRun(store, wantedID, wlCfg.RigHandle, skipClaim)
+	// Step 1: branch-aware read to get the item description for job decoding.
+	detail, err := client.Detail(wantedID)
 	if err != nil {
-		return err
+		return fmt.Errorf("querying wanted item: %w", err)
+	}
+	if detail.Item == nil {
+		return fmt.Errorf("wanted item %s not found", wantedID)
+	}
+	if detail.Item.Type != "inference" {
+		return fmt.Errorf("wanted item %s has type %q, expected \"inference\"", wantedID, detail.Item.Type)
 	}
 
-	fmt.Fprintf(stdout, "%s Inference completed for %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Completion ID: %s\n", completionID)
-	fmt.Fprintf(stdout, "  Completed by:  %s\n", wlCfg.RigHandle)
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
-	}
-
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: wl infer verify "+wantedID))
-
-	return nil
-}
-
-// executeInferRun is the testable business logic for running an inference job.
-// When skipClaim is true, the item must already be claimed and claiming is skipped.
-func executeInferRun(store commons.WLCommonsStore, wantedID, rigHandle string, skipClaim bool) (string, error) {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return "", fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if item.Type != "inference" {
-		return "", fmt.Errorf("wanted item %s has type %q, expected \"inference\"", wantedID, item.Type)
-	}
-
+	// Validate status.
 	if skipClaim {
-		if item.Status != "claimed" {
-			return "", fmt.Errorf("wanted item %s has status %q, expected \"claimed\" (--skip-claim)", wantedID, item.Status)
+		if detail.Item.Status != "claimed" {
+			return fmt.Errorf("wanted item %s has status %q, expected \"claimed\" (--skip-claim)", wantedID, detail.Item.Status)
 		}
 	} else {
-		if item.Status != "open" {
-			return "", fmt.Errorf("wanted item %s has status %q, expected \"open\"", wantedID, item.Status)
+		if detail.Item.Status != "open" {
+			return fmt.Errorf("wanted item %s has status %q, expected \"open\"", wantedID, detail.Item.Status)
 		}
 	}
 
-	job, err := inference.DecodeJob(item.Description)
+	// Decode job from description.
+	job, err := inference.DecodeJob(detail.Item.Description)
 	if err != nil {
-		return "", fmt.Errorf("decoding inference job from description: %w", err)
+		return fmt.Errorf("decoding inference job from description: %w", err)
 	}
 
-	// Claim the item (unless already claimed externally).
+	// Step 2: Claim (unless --skip-claim).
 	if !skipClaim {
-		if err := store.ClaimWanted(wantedID, rigHandle); err != nil {
-			return "", fmt.Errorf("claiming wanted item: %w", err)
+		if _, err := client.Claim(wantedID); err != nil {
+			return fmt.Errorf("claiming wanted item: %w", err)
 		}
 	}
 
-	// Run inference.
+	// Step 3: Run inference.
 	result, err := inference.Run(job)
 	if err != nil {
 		if !skipClaim {
 			// Release claim so another worker can retry.
-			_ = store.UnclaimWanted(wantedID)
+			_, _ = client.Unclaim(wantedID)
 		}
-		return "", fmt.Errorf("running inference: %w", err)
+		return fmt.Errorf("running inference: %w", err)
 	}
 
 	// Encode result as evidence.
 	evidence, err := inference.EncodeResult(result)
 	if err != nil {
 		if !skipClaim {
-			_ = store.UnclaimWanted(wantedID)
+			_, _ = client.Unclaim(wantedID)
 		}
-		return "", fmt.Errorf("encoding inference result: %w", err)
+		return fmt.Errorf("encoding inference result: %w", err)
 	}
 
-	// Submit completion.
-	completionID := commons.GeneratePrefixedID("c", wantedID, rigHandle)
-	if err := store.SubmitCompletion(completionID, wantedID, rigHandle, evidence); err != nil {
-		return "", fmt.Errorf("submitting completion: %w", err)
+	// Step 4: Submit completion.
+	doneResult, err := client.Done(wantedID, evidence)
+	if err != nil {
+		return fmt.Errorf("submitting completion: %w", err)
 	}
 
-	return completionID, nil
+	fmt.Fprintf(stdout, "%s Inference completed for %s\n", style.Bold.Render("✓"), wantedID)
+	fmt.Fprintf(stdout, "  Completed by:  %s\n", wlCfg.RigHandle)
+	if doneResult.Branch != "" {
+		fmt.Fprintf(stdout, "  Branch: %s\n", doneResult.Branch)
+	}
+	if doneResult.Detail != nil && doneResult.Detail.PRURL != "" {
+		fmt.Fprintf(stdout, "  PR: %s\n", doneResult.Detail.PRURL)
+	}
+	if doneResult.Hint != "" {
+		fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render(doneResult.Hint))
+	}
+
+	printNextHint(stdout, "Next: wl infer verify "+wantedID)
+
+	return nil
 }

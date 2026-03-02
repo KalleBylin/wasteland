@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -84,61 +84,54 @@ func runPost(cmd *cobra.Command, stdout, _ io.Writer, title, description, projec
 		return hintWrap(err)
 	}
 
-	item := &commons.WantedItem{
-		ID:          commons.GenerateWantedID(title),
+	client, err := newSDKClient(wlCfg, noPush)
+	if err != nil {
+		return err
+	}
+
+	result, err := client.Post(sdk.PostInput{
 		Title:       title,
 		Description: description,
 		Project:     project,
 		Type:        itemType,
 		Priority:    priority,
-		Tags:        tagList,
-		PostedBy:    wlCfg.RigHandle,
 		EffortLevel: effort,
-	}
-
-	mc, err := newMutationContext(wlCfg, item.ID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+		Tags:        tagList,
+	})
 	if err != nil {
 		return err
 	}
 
-	if err := postWanted(store, item); err != nil {
-		return err
+	itemID := ""
+	if result.Detail != nil && result.Detail.Item != nil {
+		itemID = result.Detail.Item.ID
 	}
 
-	fmt.Fprintf(stdout, "%s Posted wanted item: %s\n", style.Bold.Render("✓"), style.Bold.Render(item.ID))
-	fmt.Fprintf(stdout, "  Title:    %s\n", item.Title)
-	if item.Project != "" {
-		fmt.Fprintf(stdout, "  Project:  %s\n", item.Project)
+	fmt.Fprintf(stdout, "%s Posted wanted item: %s\n", style.Bold.Render("✓"), style.Bold.Render(itemID))
+	fmt.Fprintf(stdout, "  Title:    %s\n", title)
+	if project != "" {
+		fmt.Fprintf(stdout, "  Project:  %s\n", project)
 	}
-	if item.Type != "" {
-		fmt.Fprintf(stdout, "  Type:     %s\n", item.Type)
+	if itemType != "" {
+		fmt.Fprintf(stdout, "  Type:     %s\n", itemType)
 	}
-	fmt.Fprintf(stdout, "  Priority: %d\n", item.Priority)
-	fmt.Fprintf(stdout, "  Effort:   %s\n", item.EffortLevel)
-	if len(item.Tags) > 0 {
-		fmt.Fprintf(stdout, "  Tags:     %s\n", strings.Join(item.Tags, ", "))
+	fmt.Fprintf(stdout, "  Priority: %d\n", priority)
+	fmt.Fprintf(stdout, "  Effort:   %s\n", effort)
+	if len(tagList) > 0 {
+		fmt.Fprintf(stdout, "  Tags:     %s\n", strings.Join(tagList, ", "))
 	}
-	fmt.Fprintf(stdout, "  Posted by: %s\n", item.PostedBy)
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch:   %s\n", mc.BranchName())
+	fmt.Fprintf(stdout, "  Posted by: %s\n", wlCfg.RigHandle)
+	if result.Branch != "" {
+		fmt.Fprintf(stdout, "  Branch:   %s\n", result.Branch)
+	}
+	if result.Detail != nil && result.Detail.PRURL != "" {
+		fmt.Fprintf(stdout, "  PR: %s\n", result.Detail.PRURL)
+	}
+	if result.Hint != "" {
+		fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render(result.Hint))
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: others can claim this. Browse: wl browse"))
+	printNextHint(stdout, "Next: others can claim this. Browse: wl browse")
 
 	return nil
 }
@@ -161,15 +154,6 @@ func validatePostInputs(itemType, effort string, priority int) error {
 
 	if priority < 0 || priority > 4 {
 		return fmt.Errorf("invalid priority %d: must be 0-4", priority)
-	}
-
-	return nil
-}
-
-// postWanted contains the testable business logic for posting a wanted item.
-func postWanted(store commons.WLCommonsStore, item *commons.WantedItem) error {
-	if err := store.InsertWanted(item); err != nil {
-		return fmt.Errorf("posting wanted item: %w", err)
 	}
 
 	return nil

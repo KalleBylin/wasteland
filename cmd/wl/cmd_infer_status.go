@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/julianknutsen/wasteland/internal/inference"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -42,22 +43,25 @@ func runInferStatus(cmd *cobra.Command, stdout, _ io.Writer, wantedID string) er
 		return err
 	}
 
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, false)
 	if err != nil {
 		return err
 	}
 
-	result, err := getStatus(store, wantedID)
+	detail, err := client.Detail(wantedID)
 	if err != nil {
-		return err
+		return fmt.Errorf("querying wanted item: %w", err)
+	}
+	if detail.Item == nil {
+		return fmt.Errorf("wanted item %s not found", wantedID)
 	}
 
-	renderInferStatus(stdout, result)
+	renderInferStatus(stdout, detail)
 	return nil
 }
 
 // renderInferStatus writes inference-specific status output.
-func renderInferStatus(w io.Writer, r *StatusResult) {
+func renderInferStatus(w io.Writer, r *sdk.DetailResult) {
 	item := r.Item
 
 	// Standard header.

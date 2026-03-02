@@ -5,8 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/spf13/cobra"
 )
 
@@ -87,49 +86,35 @@ func runAccept(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, quality
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	stamp, err := acceptCompletion(store, wantedID, rigHandle, quality, reliability, severity, skillTags, message)
+	result, err := client.Accept(wantedID, sdk.AcceptInput{
+		Quality:     quality,
+		Reliability: reliability,
+		Severity:    severity,
+		SkillTags:   skillTags,
+		Message:     message,
+	})
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Accepted %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Stamp ID: %s\n", stamp.ID)
-	fmt.Fprintf(stdout, "  Quality: %d, Reliability: %d\n", stamp.Quality, stamp.Reliability)
-	fmt.Fprintf(stdout, "  Severity: %s\n", stamp.Severity)
-	if len(stamp.SkillTags) > 0 {
-		fmt.Fprintf(stdout, "  Skills: %s\n", strings.Join(stamp.SkillTags, ", "))
+	extras := []string{
+		fmt.Sprintf("Quality: %d, Reliability: %d", quality, reliability),
+		"Severity: " + severity,
 	}
-	if stamp.Message != "" {
-		fmt.Fprintf(stdout, "  Message: %s\n", stamp.Message)
+	if len(skillTags) > 0 {
+		extras = append(extras, "Skills: "+strings.Join(skillTags, ", "))
 	}
-	fmt.Fprintf(stdout, "  Status: completed\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+	if message != "" {
+		extras = append(extras, "Message: "+message)
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: stamp issued. View: wl status "+wantedID))
+	renderMutationResult(stdout, "Accepted", wantedID, result, extras...)
+	printNextHint(stdout, "Next: stamp issued. View: wl status "+wantedID)
 
 	return nil
 }
@@ -149,49 +134,4 @@ func validateAcceptInputs(quality, reliability int, severity string) error {
 		return fmt.Errorf("invalid severity %q: must be one of leaf, branch, root", severity)
 	}
 	return nil
-}
-
-// acceptCompletion contains the testable business logic for accepting a completion.
-func acceptCompletion(store commons.WLCommonsStore, wantedID, rigHandle string, quality, reliability int, severity string, skillTags []string, message string) (*commons.Stamp, error) {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionAccept); err != nil {
-		return nil, fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if item.PostedBy != rigHandle {
-		return nil, fmt.Errorf("only the poster can accept (posted by %q)", item.PostedBy)
-	}
-
-	completion, err := store.QueryCompletion(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying completion: %w", err)
-	}
-
-	if completion.CompletedBy == rigHandle {
-		return nil, fmt.Errorf("cannot accept your own completion")
-	}
-
-	stampID := commons.GeneratePrefixedID("s", wantedID, rigHandle)
-	stamp := &commons.Stamp{
-		ID:          stampID,
-		Author:      rigHandle,
-		Subject:     completion.CompletedBy,
-		Quality:     quality,
-		Reliability: reliability,
-		Severity:    severity,
-		ContextID:   completion.ID,
-		ContextType: "completion",
-		SkillTags:   skillTags,
-		Message:     message,
-	}
-
-	if err := store.AcceptCompletion(wantedID, completion.ID, rigHandle, stamp); err != nil {
-		return nil, fmt.Errorf("accepting completion: %w", err)
-	}
-
-	return stamp, nil
 }

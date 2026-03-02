@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -48,62 +45,18 @@ func runUnclaim(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPush
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
-	if err != nil {
-		return err
-	}
-	item, err := unclaimWanted(store, wantedID, rigHandle)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Unclaimed %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Title: %s\n", item.Title)
-	fmt.Fprintf(stdout, "  Status: open\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+	result, err := client.Unclaim(wantedID)
+	if err != nil {
+		return err
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: item is back on the board. Browse: wl browse"))
+	renderMutationResult(stdout, "Unclaimed", wantedID, result)
+	printNextHint(stdout, "Next: item is back on the board. Browse: wl browse")
 
 	return nil
-}
-
-// unclaimWanted contains the testable business logic for unclaiming a wanted item.
-func unclaimWanted(store commons.WLCommonsStore, wantedID, rigHandle string) (*commons.WantedItem, error) {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionUnclaim); err != nil {
-		return nil, fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if item.ClaimedBy != rigHandle && item.PostedBy != rigHandle {
-		return nil, fmt.Errorf("only the claimer or poster can unclaim (claimed by %q, posted by %q)", item.ClaimedBy, item.PostedBy)
-	}
-
-	if err := store.UnclaimWanted(wantedID); err != nil {
-		return nil, fmt.Errorf("unclaiming wanted item: %w", err)
-	}
-
-	return item, nil
 }

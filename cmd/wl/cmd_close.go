@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -49,61 +46,18 @@ func runClose(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPush b
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	if err := closeWanted(store, wantedID, rigHandle); err != nil {
+	result, err := client.Close(wantedID)
+	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Closed %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Status: completed\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
-	}
-
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: item completed. View: wl status "+wantedID))
-
-	return nil
-}
-
-// closeWanted contains the testable business logic for closing a wanted item.
-func closeWanted(store commons.WLCommonsStore, wantedID, rigHandle string) error {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionClose); err != nil {
-		return fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if item.PostedBy != rigHandle {
-		return fmt.Errorf("only the poster can close (posted by %q)", item.PostedBy)
-	}
-
-	if err := store.CloseWanted(wantedID); err != nil {
-		return fmt.Errorf("closing wanted item: %w", err)
-	}
+	renderMutationResult(stdout, "Closed", wantedID, result)
+	printNextHint(stdout, "Next: item completed. View: wl status "+wantedID)
 
 	return nil
 }

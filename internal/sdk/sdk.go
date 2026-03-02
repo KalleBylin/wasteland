@@ -17,6 +17,7 @@ type ClientConfig struct {
 	Mode      string     // "wild-west" or "pr"
 	Signing   bool       // GPG-signed dolt commits
 	HopURI    string     // rig's HOP protocol URI
+	NoPush    bool       // skip pushing after mutations
 
 	// Optional callbacks — nil disables the feature.
 	CreatePR         func(branch string) (string, error)
@@ -35,6 +36,7 @@ type Client struct {
 	mode      string
 	signing   bool
 	hopURI    string
+	noPush    bool
 	mu        sync.Mutex // serializes mutations (dolt CLI is single-writer)
 
 	// CreatePR submits a PR for the given branch. Nil disables the feature.
@@ -61,6 +63,7 @@ func New(cfg ClientConfig) *Client {
 		mode:             cfg.Mode,
 		signing:          cfg.Signing,
 		hopURI:           cfg.HopURI,
+		noPush:           cfg.NoPush,
 		CreatePR:         cfg.CreatePR,
 		CheckPR:          cfg.CheckPR,
 		ClosePR:          cfg.ClosePR,

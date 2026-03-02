@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -99,36 +98,18 @@ func runUpdate(cmd *cobra.Command, stdout, _ io.Writer, wantedID, title, descrip
 		return err
 	}
 
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	if err := updateWanted(store, wantedID, fields); err != nil {
+	result, err := client.Update(wantedID, fields)
+	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Updated %s\n", style.Bold.Render("✓"), wantedID)
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
-	}
-
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: wl browse to see the board"))
+	renderMutationResult(stdout, "Updated", wantedID, result)
+	printNextHint(stdout, "Next: wl browse to see the board")
 
 	return nil
 }
@@ -157,24 +138,6 @@ func validateUpdateInputs(itemType, effort string, priority int) error {
 
 	if priority != -1 && (priority < 0 || priority > 4) {
 		return fmt.Errorf("invalid priority %d: must be 0-4", priority)
-	}
-
-	return nil
-}
-
-// updateWanted contains the testable business logic for updating a wanted item.
-func updateWanted(store commons.WLCommonsStore, wantedID string, fields *commons.WantedUpdate) error {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionUpdate); err != nil {
-		return fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if err := store.UpdateWanted(wantedID, fields); err != nil {
-		return fmt.Errorf("updating wanted item: %w", err)
 	}
 
 	return nil

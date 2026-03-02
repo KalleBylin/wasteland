@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -41,57 +41,25 @@ func runStatus(cmd *cobra.Command, stdout, _ io.Writer, wantedID string) error {
 		return err
 	}
 
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, false)
 	if err != nil {
 		return err
 	}
 
-	result, err := getStatus(store, wantedID)
+	detail, err := client.Detail(wantedID)
 	if err != nil {
-		return err
+		return fmt.Errorf("querying wanted item: %w", err)
+	}
+	if detail.Item == nil {
+		return fmt.Errorf("wanted item %s not found", wantedID)
 	}
 
-	renderStatus(stdout, result)
+	renderDetailStatus(stdout, detail)
 	return nil
 }
 
-// StatusResult holds everything needed to render a status view.
-type StatusResult struct {
-	Item       *commons.WantedItem
-	Completion *commons.CompletionRecord
-	Stamp      *commons.Stamp
-}
-
-// getStatus fetches all data needed for a status display.
-func getStatus(store commons.WLCommonsStore, wantedID string) (*StatusResult, error) {
-	item, err := store.QueryWantedDetail(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	result := &StatusResult{Item: item}
-
-	if item.Status == "in_review" || item.Status == "completed" {
-		completion, err := store.QueryCompletion(wantedID)
-		if err != nil {
-			return nil, fmt.Errorf("querying completion: %w", err)
-		}
-		result.Completion = completion
-
-		if completion.StampID != "" {
-			stamp, err := store.QueryStamp(completion.StampID)
-			if err != nil {
-				return nil, fmt.Errorf("querying stamp: %w", err)
-			}
-			result.Stamp = stamp
-		}
-	}
-
-	return result, nil
-}
-
-// renderStatus writes the formatted status output.
-func renderStatus(w io.Writer, r *StatusResult) {
+// renderDetailStatus writes the formatted status output from an SDK DetailResult.
+func renderDetailStatus(w io.Writer, r *sdk.DetailResult) {
 	item := r.Item
 
 	// Header
@@ -146,6 +114,24 @@ func renderStatus(w io.Writer, r *StatusResult) {
 	if item.ClaimedBy != "" {
 		fmt.Fprintln(w)
 		fmt.Fprintf(w, "  Claimed by:  %s\n", item.ClaimedBy)
+	}
+
+	// Branch info (PR mode)
+	if r.Branch != "" {
+		fmt.Fprintln(w)
+		fmt.Fprintf(w, "  Branch:      %s\n", r.Branch)
+		if r.BranchURL != "" {
+			fmt.Fprintf(w, "  Branch URL:  %s\n", r.BranchURL)
+		}
+		if r.Delta != "" {
+			fmt.Fprintf(w, "  Delta:       %s\n", r.Delta)
+		}
+		if r.MainStatus != "" {
+			fmt.Fprintf(w, "  Main status: %s\n", r.MainStatus)
+		}
+		if r.PRURL != "" {
+			fmt.Fprintf(w, "  PR:          %s\n", r.PRURL)
+		}
 	}
 
 	// Completion

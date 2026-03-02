@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -53,64 +50,23 @@ func runReject(cmd *cobra.Command, stdout, _ io.Writer, wantedID, reason string,
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	if err := rejectCompletion(store, wantedID, rigHandle, reason); err != nil {
+	result, err := client.Reject(wantedID, reason)
+	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Rejected %s\n", style.Bold.Render("✓"), wantedID)
+	var extras []string
 	if reason != "" {
-		fmt.Fprintf(stdout, "  Reason: %s\n", reason)
-	}
-	fmt.Fprintf(stdout, "  Status: claimed\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+		extras = append(extras, "Reason: "+reason)
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: claimer can fix and resubmit: wl done "+wantedID+" --evidence <url>"))
-
-	return nil
-}
-
-// rejectCompletion contains the testable business logic for rejecting a completion.
-func rejectCompletion(store commons.WLCommonsStore, wantedID, rigHandle, reason string) error {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionReject); err != nil {
-		return fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if item.PostedBy != rigHandle {
-		return fmt.Errorf("only the poster can reject (posted by %q)", item.PostedBy)
-	}
-
-	if err := store.RejectCompletion(wantedID, rigHandle, reason); err != nil {
-		return fmt.Errorf("rejecting completion: %w", err)
-	}
+	renderMutationResult(stdout, "Rejected", wantedID, result, extras...)
+	printNextHint(stdout, "Next: claimer can fix and resubmit: wl done "+wantedID+" --evidence <url>")
 
 	return nil
 }

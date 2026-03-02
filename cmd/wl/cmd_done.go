@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 
@@ -60,65 +57,20 @@ func runDone(cmd *cobra.Command, stdout, _ io.Writer, wantedID, evidence string,
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
-	cleanup, err := mc.Setup()
+
+	result, err := client.Done(wantedID, evidence)
 	if err != nil {
 		return err
 	}
-	defer cleanup()
 
-	store, err := openStoreFromConfig(wlCfg)
-	if err != nil {
-		return err
-	}
-	completionID := commons.GeneratePrefixedID("c", wantedID, rigHandle)
-
-	if err := submitDone(store, wantedID, rigHandle, evidence, completionID); err != nil {
-		return err
-	}
-
-	fmt.Fprintf(stdout, "%s Completion submitted for %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Completion ID: %s\n", completionID)
-	fmt.Fprintf(stdout, "  Completed by: %s\n", rigHandle)
-	fmt.Fprintf(stdout, "  Evidence: %s\n", evidence)
-	fmt.Fprintf(stdout, "  Status: in_review\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
-	}
-
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: wait for review. Check: wl status "+wantedID))
-
-	return nil
-}
-
-// submitDone contains the testable business logic for submitting a completion.
-func submitDone(store commons.WLCommonsStore, wantedID, rigHandle, evidence, completionID string) error {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionDone); err != nil {
-		return fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if item.ClaimedBy != rigHandle {
-		return fmt.Errorf("wanted item %s is claimed by %q, not %q", wantedID, item.ClaimedBy, rigHandle)
-	}
-
-	if err := store.SubmitCompletion(completionID, wantedID, rigHandle, evidence); err != nil {
-		return fmt.Errorf("submitting completion: %w", err)
-	}
+	renderMutationResult(stdout, "Completion submitted for", wantedID, result,
+		"Completed by: "+wlCfg.RigHandle,
+		"Evidence: "+evidence)
+	printNextHint(stdout, "Next: wait for review. Check: wl status "+wantedID)
 
 	return nil
 }

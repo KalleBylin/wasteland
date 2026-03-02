@@ -38,14 +38,20 @@ func (c *Client) mutateWildWest(wantedID, commitMsg string, stmts ...string) (*M
 	if err := c.db.Exec("", commitMsg, c.signing, stmts...); err != nil {
 		return nil, err
 	}
-	if err := c.db.PushWithSync(io.Discard); err != nil {
-		return nil, err
+	if !c.noPush {
+		if err := c.db.PushWithSync(io.Discard); err != nil {
+			return nil, err
+		}
 	}
 	detail, err := c.detailWildWest(wantedID)
 	if err != nil {
 		return nil, err
 	}
-	return &MutationResult{Detail: detail}, nil
+	result := &MutationResult{Detail: detail}
+	if c.noPush {
+		result.Hint = "changes saved locally (--no-push)"
+	}
+	return result, nil
 }
 
 func (c *Client) mutatePR(wantedID, commitMsg string, stmts ...string) (*MutationResult, error) {
@@ -58,7 +64,12 @@ func (c *Client) mutatePR(wantedID, commitMsg string, stmts ...string) (*Mutatio
 
 	result := c.mutatePRResult(wantedID, branch, mainStatus)
 
-	// Push the branch.
+	// Push the branch (unless --no-push).
+	if c.noPush {
+		result.Hint = "changes saved locally (--no-push)"
+		return result, nil
+	}
+
 	var pushLog bytes.Buffer
 	if err := c.db.PushBranch(branch, &pushLog); err != nil {
 		if msg := strings.TrimSpace(pushLog.String()); msg != "" {

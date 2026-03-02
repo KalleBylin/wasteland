@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/julianknutsen/wasteland/internal/commons"
 )
+
+// Business logic tests for submitting completions moved to internal/sdk/.
 
 func TestGenerateCompletionID_Format(t *testing.T) {
 	t.Parallel()
@@ -37,83 +38,5 @@ func TestGenerateCompletionID_DeterministicInputs(t *testing.T) {
 	}
 	if id1 == id3 {
 		t.Errorf("same ID for different rigHandles: %s", id1)
-	}
-}
-
-func TestSubmitDone_Success(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{
-		ID:    "w-abc",
-		Title: "Fix bug",
-	})
-	_ = store.ClaimWanted("w-abc", "my-rig")
-
-	err := submitDone(store, "w-abc", "my-rig", "https://github.com/pr/1", "c-test123")
-	if err != nil {
-		t.Fatalf("submitDone() error: %v", err)
-	}
-
-	item, _ := store.QueryWanted("w-abc")
-	if item.Status != "in_review" {
-		t.Errorf("Status = %q, want %q", item.Status, "in_review")
-	}
-}
-
-func TestSubmitDone_StoreError(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	store.SubmitCompletionErr = fmt.Errorf("completion store error")
-	_ = store.InsertWanted(&commons.WantedItem{
-		ID:    "w-abc",
-		Title: "Fix bug",
-	})
-	_ = store.ClaimWanted("w-abc", "my-rig")
-
-	err := submitDone(store, "w-abc", "my-rig", "https://github.com/pr/1", "c-test")
-	if err == nil {
-		t.Fatal("submitDone() expected error when SubmitCompletion fails")
-	}
-	if !strings.Contains(err.Error(), "completion store error") {
-		t.Errorf("error = %q, want to contain 'completion store error'", err.Error())
-	}
-}
-
-func TestSubmitDone_NotClaimed(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{
-		ID:    "w-abc",
-		Title: "Fix bug",
-	})
-
-	err := submitDone(store, "w-abc", "my-rig", "evidence", "c-test")
-	if err == nil {
-		t.Fatal("submitDone() expected error for unclaimed item")
-	}
-}
-
-func TestSubmitDone_WrongClaimer(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{
-		ID:    "w-abc",
-		Title: "Fix bug",
-	})
-	_ = store.ClaimWanted("w-abc", "other-rig")
-
-	err := submitDone(store, "w-abc", "my-rig", "evidence", "c-test")
-	if err == nil {
-		t.Fatal("submitDone() expected error for wrong claimer")
-	}
-}
-
-func TestSubmitDone_NotFound(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-
-	err := submitDone(store, "w-nonexistent", "my-rig", "evidence", "c-test")
-	if err == nil {
-		t.Fatal("submitDone() expected error for missing item")
 	}
 }

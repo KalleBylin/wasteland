@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/inference"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -43,12 +43,20 @@ func runInferVerify(cmd *cobra.Command, stdout, _ io.Writer, wantedID string) er
 		return err
 	}
 
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, false)
 	if err != nil {
 		return err
 	}
 
-	vr, err := executeInferVerify(store, wantedID)
+	detail, err := client.Detail(wantedID)
+	if err != nil {
+		return fmt.Errorf("querying wanted item: %w", err)
+	}
+	if detail.Item == nil {
+		return fmt.Errorf("wanted item %s not found", wantedID)
+	}
+
+	vr, err := executeInferVerify(detail, wantedID)
 	if err != nil {
 		return err
 	}
@@ -66,11 +74,8 @@ func runInferVerify(cmd *cobra.Command, stdout, _ io.Writer, wantedID string) er
 }
 
 // executeInferVerify is the testable business logic for verifying an inference job.
-func executeInferVerify(store commons.WLCommonsStore, wantedID string) (*inference.VerifyResult, error) {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying wanted item: %w", err)
-	}
+func executeInferVerify(detail *sdk.DetailResult, wantedID string) (*inference.VerifyResult, error) {
+	item := detail.Item
 
 	if item.Type != "inference" {
 		return nil, fmt.Errorf("wanted item %s has type %q, expected \"inference\"", wantedID, item.Type)
@@ -81,12 +86,11 @@ func executeInferVerify(store commons.WLCommonsStore, wantedID string) (*inferen
 		return nil, fmt.Errorf("decoding inference job: %w", err)
 	}
 
-	completion, err := store.QueryCompletion(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying completion: %w", err)
+	if detail.Completion == nil {
+		return nil, fmt.Errorf("no completion found for wanted item %q", wantedID)
 	}
 
-	result, err := inference.DecodeResult(completion.Evidence)
+	result, err := inference.DecodeResult(detail.Completion.Evidence)
 	if err != nil {
 		return nil, fmt.Errorf("decoding inference result from evidence: %w", err)
 	}

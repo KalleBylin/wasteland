@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/julianknutsen/wasteland/internal/commons"
 )
+
+// Business logic tests for accepting moved to internal/sdk/ (sdk_test.go, lifecycle_test.go).
 
 func TestGenerateStampID_Format(t *testing.T) {
 	t.Parallel()
@@ -61,133 +62,5 @@ func TestValidateAcceptInputs(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestAcceptCompletion_Success(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug", PostedBy: "reviewer-rig"})
-	_ = store.ClaimWanted("w-abc", "worker-rig")
-	_ = store.SubmitCompletion("c-test123", "w-abc", "worker-rig", "https://github.com/pr/1")
-
-	stamp, err := acceptCompletion(store, "w-abc", "reviewer-rig", 4, 3, "leaf", []string{"go", "auth"}, "solid work")
-	if err != nil {
-		t.Fatalf("acceptCompletion() error: %v", err)
-	}
-
-	if stamp.Quality != 4 {
-		t.Errorf("stamp.Quality = %d, want 4", stamp.Quality)
-	}
-	if stamp.Reliability != 3 {
-		t.Errorf("stamp.Reliability = %d, want 3", stamp.Reliability)
-	}
-	if stamp.Severity != "leaf" {
-		t.Errorf("stamp.Severity = %q, want %q", stamp.Severity, "leaf")
-	}
-	if stamp.Subject != "worker-rig" {
-		t.Errorf("stamp.Subject = %q, want %q", stamp.Subject, "worker-rig")
-	}
-	if stamp.Author != "reviewer-rig" {
-		t.Errorf("stamp.Author = %q, want %q", stamp.Author, "reviewer-rig")
-	}
-	if stamp.Message != "solid work" {
-		t.Errorf("stamp.Message = %q, want %q", stamp.Message, "solid work")
-	}
-	if len(stamp.SkillTags) != 2 || stamp.SkillTags[0] != "go" || stamp.SkillTags[1] != "auth" {
-		t.Errorf("stamp.SkillTags = %v, want [go auth]", stamp.SkillTags)
-	}
-
-	item, _ := store.QueryWanted("w-abc")
-	if item.Status != "completed" {
-		t.Errorf("Status = %q, want %q", item.Status, "completed")
-	}
-}
-
-func TestAcceptCompletion_NotInReview(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug"})
-
-	_, err := acceptCompletion(store, "w-abc", "reviewer-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error for non-in_review item")
-	}
-	if !strings.Contains(err.Error(), "not in_review") {
-		t.Errorf("error = %q, want to contain 'not in_review'", err.Error())
-	}
-}
-
-func TestAcceptCompletion_NotFound(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-
-	_, err := acceptCompletion(store, "w-nonexistent", "reviewer-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error for missing item")
-	}
-}
-
-func TestAcceptCompletion_SelfAccept(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug", PostedBy: "my-rig"})
-	_ = store.ClaimWanted("w-abc", "my-rig")
-	_ = store.SubmitCompletion("c-test123", "w-abc", "my-rig", "evidence")
-
-	_, err := acceptCompletion(store, "w-abc", "my-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error for self-accept")
-	}
-	if !strings.Contains(err.Error(), "cannot accept your own completion") {
-		t.Errorf("error = %q, want to contain 'cannot accept your own completion'", err.Error())
-	}
-}
-
-func TestAcceptCompletion_NotPoster(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug", PostedBy: "poster-rig"})
-	_ = store.ClaimWanted("w-abc", "worker-rig")
-	_ = store.SubmitCompletion("c-test123", "w-abc", "worker-rig", "evidence")
-
-	_, err := acceptCompletion(store, "w-abc", "other-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error for non-poster")
-	}
-	if !strings.Contains(err.Error(), "only the poster can accept") {
-		t.Errorf("error = %q, want to contain 'only the poster can accept'", err.Error())
-	}
-}
-
-func TestAcceptCompletion_QueryCompletionError(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug", Status: "in_review", PostedBy: "reviewer-rig"})
-	store.QueryCompletionErr = fmt.Errorf("completion query error")
-
-	_, err := acceptCompletion(store, "w-abc", "reviewer-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error when QueryCompletion fails")
-	}
-	if !strings.Contains(err.Error(), "completion query error") {
-		t.Errorf("error = %q, want to contain 'completion query error'", err.Error())
-	}
-}
-
-func TestAcceptCompletion_AcceptCompletionError(t *testing.T) {
-	t.Parallel()
-	store := newFakeWLCommonsStore()
-	_ = store.InsertWanted(&commons.WantedItem{ID: "w-abc", Title: "Fix bug", PostedBy: "reviewer-rig"})
-	_ = store.ClaimWanted("w-abc", "worker-rig")
-	_ = store.SubmitCompletion("c-test123", "w-abc", "worker-rig", "evidence")
-	store.AcceptCompletionErr = fmt.Errorf("accept store error")
-
-	_, err := acceptCompletion(store, "w-abc", "reviewer-rig", 4, 3, "leaf", nil, "")
-	if err == nil {
-		t.Fatal("acceptCompletion() expected error when AcceptCompletion fails")
-	}
-	if !strings.Contains(err.Error(), "accept store error") {
-		t.Errorf("error = %q, want to contain 'accept store error'", err.Error())
 	}
 }

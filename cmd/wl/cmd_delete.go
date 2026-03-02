@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -51,55 +50,30 @@ func runDelete(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPush 
 		return err
 	}
 
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	if err := deleteWanted(store, wantedID); err != nil {
+	result, err := client.Delete(wantedID)
+	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(stdout, "%s Withdrawn %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Status: withdrawn\n")
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+	if result.Detail != nil && result.Detail.Item != nil {
+		fmt.Fprintf(stdout, "  Status: %s\n", result.Detail.Item.Status)
+	} else {
+		fmt.Fprintf(stdout, "  Status: withdrawn\n")
+	}
+	if result.Branch != "" {
+		fmt.Fprintf(stdout, "  Branch: %s\n", result.Branch)
+	}
+	if result.Hint != "" {
+		fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render(result.Hint))
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: wl browse to see the board"))
-
-	return nil
-}
-
-// deleteWanted contains the testable business logic for withdrawing a wanted item.
-func deleteWanted(store commons.WLCommonsStore, wantedID string) error {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionDelete); err != nil {
-		return fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if err := store.DeleteWanted(wantedID); err != nil {
-		return fmt.Errorf("deleting wanted item: %w", err)
-	}
+	printNextHint(stdout, "Next: wl browse to see the board")
 
 	return nil
 }

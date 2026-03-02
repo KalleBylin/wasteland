@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/inference"
+	"github.com/julianknutsen/wasteland/internal/sdk"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -75,49 +75,42 @@ func runInferPost(cmd *cobra.Command, stdout, _ io.Writer, prompt, model string,
 		return hintWrap(err)
 	}
 
-	item := &commons.WantedItem{
-		ID:          commons.GenerateWantedID(title),
+	client, err := newSDKClient(wlCfg, noPush)
+	if err != nil {
+		return err
+	}
+
+	result, err := client.Post(sdk.PostInput{
 		Title:       title,
 		Description: description,
 		Type:        "inference",
 		Priority:    2,
-		PostedBy:    wlCfg.RigHandle,
 		EffortLevel: "small",
-	}
-
-	mc, err := newMutationContext(wlCfg, item.ID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
+	})
 	if err != nil {
 		return err
 	}
 
-	if err := postWanted(store, item); err != nil {
-		return err
+	itemID := ""
+	if result.Detail != nil && result.Detail.Item != nil {
+		itemID = result.Detail.Item.ID
 	}
 
-	fmt.Fprintf(stdout, "%s Posted inference job: %s\n", style.Bold.Render("✓"), style.Bold.Render(item.ID))
+	fmt.Fprintf(stdout, "%s Posted inference job: %s\n", style.Bold.Render("✓"), style.Bold.Render(itemID))
 	fmt.Fprintf(stdout, "  Model:  %s\n", model)
 	fmt.Fprintf(stdout, "  Seed:   %d\n", seed)
 	fmt.Fprintf(stdout, "  Prompt: %s\n", truncate(prompt, 80))
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+	if result.Branch != "" {
+		fmt.Fprintf(stdout, "  Branch: %s\n", result.Branch)
+	}
+	if result.Detail != nil && result.Detail.PRURL != "" {
+		fmt.Fprintf(stdout, "  PR: %s\n", result.Detail.PRURL)
+	}
+	if result.Hint != "" {
+		fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render(result.Hint))
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
-
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: wl infer run "+item.ID))
+	printNextHint(stdout, "Next: wl infer run "+itemID)
 
 	return nil
 }

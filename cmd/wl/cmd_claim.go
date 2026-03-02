@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
@@ -49,58 +48,25 @@ func runClaim(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPush b
 		return err
 	}
 
-	rigHandle := wlCfg.RigHandle
-
-	mc, err := newMutationContext(wlCfg, wantedID, noPush, stdout)
-	if err != nil {
-		return err
-	}
-	cleanup, err := mc.Setup()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-
-	store, err := openStoreFromConfig(wlCfg)
-	if err != nil {
-		return err
-	}
-	item, err := claimWanted(store, wantedID, rigHandle)
+	client, err := newSDKClient(wlCfg, noPush)
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(stdout, "%s Claimed %s\n", style.Bold.Render("✓"), wantedID)
-	fmt.Fprintf(stdout, "  Claimed by: %s\n", rigHandle)
-	fmt.Fprintf(stdout, "  Title: %s\n", item.Title)
-	if mc.BranchName() != "" {
-		fmt.Fprintf(stdout, "  Branch: %s\n", mc.BranchName())
+	result, err := client.Claim(wantedID)
+	if err != nil {
+		return err
 	}
 
-	if err := mc.Push(); err != nil {
-		fmt.Fprintf(stdout, "\n  %s %s\n", style.Warning.Render(style.IconWarn),
-			"Push failed — changes saved locally. Run 'wl sync' to retry.")
-	}
+	renderMutationResult(stdout, "Claimed", wantedID, result,
+		"Claimed by: "+wlCfg.RigHandle)
 
-	fmt.Fprintf(stdout, "\n  %s\n", style.Dim.Render("Next: do the work, then: wl done "+wantedID+" --evidence <url>"))
+	hint := "Next: do the work, then: wl done " + wantedID + " --evidence <url>"
+	printNextHint(stdout, hint)
 
 	return nil
 }
 
-// claimWanted contains the testable business logic for claiming a wanted item.
-func claimWanted(store commons.WLCommonsStore, wantedID, rigHandle string) (*commons.WantedItem, error) {
-	item, err := store.QueryWanted(wantedID)
-	if err != nil {
-		return nil, fmt.Errorf("querying wanted item: %w", err)
-	}
-
-	if _, err := commons.ValidateTransition(item.Status, commons.TransitionClaim); err != nil {
-		return nil, fmt.Errorf("wanted item %s: %w", wantedID, err)
-	}
-
-	if err := store.ClaimWanted(wantedID, rigHandle); err != nil {
-		return nil, fmt.Errorf("claiming wanted item: %w", err)
-	}
-
-	return item, nil
+func printNextHint(w io.Writer, hint string) {
+	fmt.Fprintf(w, "\n  %s\n", style.Dim.Render(hint))
 }
