@@ -280,8 +280,10 @@ func (e *testEnv) loadConfig(t *testing.T, upstream string) map[string]interface
 }
 
 // runWL executes the wl binary with controlled env and returns stdout, stderr, error.
+// Always passes --local-db because offline integration tests use local dolt databases.
 func runWL(t *testing.T, env *testEnv, args ...string) (string, string, error) {
 	t.Helper()
+	args = append([]string{"--local-db"}, args...)
 	cmd := exec.Command(wlBinary, args...)
 	cmd.Env = env.envSlice()
 

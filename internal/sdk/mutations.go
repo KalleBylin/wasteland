@@ -60,16 +60,21 @@ func (c *Client) Accept(wantedID string, input AcceptInput) (*MutationResult, er
 		return result, nil
 	}
 
-	// Look up the completion to get its ID.
+	// Look up the completion to get its ID and worker handle.
 	completion, err := commons.QueryCompletion(c.db, wantedID)
 	if err != nil {
 		return nil, fmt.Errorf("querying completion: %w", err)
 	}
 
+	// Self-accept guard: the accepting rig must not be the one who completed the work.
+	if completion.CompletedBy == c.rigHandle {
+		return nil, fmt.Errorf("cannot accept your own completion")
+	}
+
 	stamp := &commons.Stamp{
 		ID:          commons.GeneratePrefixedID("s", wantedID, c.rigHandle),
 		Author:      c.rigHandle,
-		Subject:     completion.ID,
+		Subject:     completion.CompletedBy,
 		Quality:     input.Quality,
 		Reliability: input.Reliability,
 		Severity:    input.Severity,
