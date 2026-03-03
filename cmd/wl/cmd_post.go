@@ -147,10 +147,15 @@ func runPost(cmd *cobra.Command, stdout, _ io.Writer, title, description, projec
 // validatePostInputs validates the type, effort, and priority fields.
 func validatePostInputs(itemType, effort string, priority int) error {
 	validTypes := map[string]bool{
-		"feature": true, "bug": true, "design": true, "rfc": true, "docs": true, "inference": true,
+		"feature": true, "bug": true, "design": true, "rfc": true, "docs": true,
+	}
+	validTypeNames := "feature, bug, design, rfc, docs"
+	if inferGateEnabled() {
+		validTypes["inference"] = true
+		validTypeNames += ", inference"
 	}
 	if itemType != "" && !validTypes[itemType] {
-		return fmt.Errorf("invalid type %q: must be one of feature, bug, design, rfc, docs, inference", itemType)
+		return fmt.Errorf("invalid type %q: must be one of %s", itemType, validTypeNames)
 	}
 
 	validEfforts := map[string]bool{

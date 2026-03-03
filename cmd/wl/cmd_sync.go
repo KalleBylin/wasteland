@@ -72,9 +72,13 @@ func runSync(cmd *cobra.Command, stdout, stderr io.Writer, dryRun bool) error {
 
 		diffCmd := exec.Command(doltPath, "diff", "--stat", "HEAD", "upstream/main")
 		diffCmd.Dir = forkDir
-		diffCmd.Stdout = stdout
 		diffCmd.Stderr = stderr
-		if err := diffCmd.Run(); err != nil {
+		// dolt diff exits non-zero when differences exist, so ignore the
+		// error when stdout captured output (meaning changes were found).
+		diffOut, _ := diffCmd.Output()
+		if len(diffOut) > 0 {
+			fmt.Fprint(stdout, string(diffOut))
+		} else {
 			fmt.Fprintf(stdout, "%s Already up to date.\n", style.Bold.Render("✓"))
 		}
 		return nil

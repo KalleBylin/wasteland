@@ -81,18 +81,18 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		mode = "pr"
 	}
 
-	// Write user metadata in new format with single-entry wastelands array.
-	meta := &UserMetadata{
-		RigHandle: req.RigHandle,
-		Wastelands: []WastelandConfig{
-			{
-				Upstream: req.Upstream,
-				ForkOrg:  req.ForkOrg,
-				ForkDB:   req.ForkDB,
-				Mode:     mode,
-			},
-		},
+	// Read-modify-write: preserve existing wastelands, upsert the new one.
+	_, meta, err := s.nango.GetConnection(req.ConnectionID)
+	if err != nil || meta == nil {
+		meta = &UserMetadata{RigHandle: req.RigHandle}
 	}
+	meta.RigHandle = req.RigHandle
+	meta.UpsertWasteland(WastelandConfig{
+		Upstream: req.Upstream,
+		ForkOrg:  req.ForkOrg,
+		ForkDB:   req.ForkDB,
+		Mode:     mode,
+	})
 	if err := s.nango.SetMetadata(req.ConnectionID, meta); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save config: " + err.Error()})
 		return

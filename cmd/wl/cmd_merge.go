@@ -50,6 +50,9 @@ func runMerge(cmd *cobra.Command, stdout, _ io.Writer, branch string, noPush, ke
 
 	// Remote mode: use RemoteDB.MergeBranch via the write API.
 	if cfg.ResolveBackend() != federation.BackendLocal {
+		if noPush {
+			return fmt.Errorf("--no-push is not supported in remote mode (remote merges are immediate)")
+		}
 		return runMergeRemote(stdout, cfg, branch, keepBranch)
 	}
 
