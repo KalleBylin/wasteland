@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // NangoConfig holds configuration for the Nango integration.
@@ -130,7 +131,7 @@ func NewNangoClient(cfg NangoConfig) *NangoClient {
 		baseURL:       base,
 		secretKey:     cfg.SecretKey,
 		integrationID: integrationID,
-		client:        &http.Client{},
+		client:        &http.Client{Timeout: 30 * time.Second},
 	}
 }
 

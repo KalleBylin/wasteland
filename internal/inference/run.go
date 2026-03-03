@@ -7,10 +7,14 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // OllamaURL is the base URL for the ollama API. Override in tests.
 var OllamaURL = "http://localhost:11434"
+
+// client is the shared HTTP client with a timeout for inference calls.
+var client = &http.Client{Timeout: 120 * time.Second}
 
 // ollamaRequest is the request body for the ollama /api/generate endpoint.
 type ollamaRequest struct {
@@ -54,7 +58,7 @@ func Run(j *Job) (*Result, error) {
 		return nil, fmt.Errorf("marshaling ollama request: %w", err)
 	}
 
-	resp, err := http.Post(OllamaURL+"/api/generate", "application/json", strings.NewReader(string(body)))
+	resp, err := client.Post(OllamaURL+"/api/generate", "application/json", strings.NewReader(string(body)))
 	if err != nil {
 		return nil, fmt.Errorf("calling ollama: %w", err)
 	}
@@ -87,7 +91,7 @@ func Hash(text string) string {
 
 // ModelExists checks whether the given model is available in the local ollama instance.
 func ModelExists(model string) (bool, error) {
-	resp, err := http.Get(OllamaURL + "/api/tags")
+	resp, err := client.Get(OllamaURL + "/api/tags")
 	if err != nil {
 		return false, fmt.Errorf("checking ollama models: %w", err)
 	}

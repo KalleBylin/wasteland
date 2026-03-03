@@ -81,11 +81,15 @@ func runServe(cmd *cobra.Command, stdout, stderr io.Writer) error {
 			}
 		}
 	} else {
+		token := commons.DoltHubToken()
+		if token == "" {
+			return fmt.Errorf("DOLTHUB_TOKEN required for remote mode — set it in your environment")
+		}
 		upOrg, upDB, err := federation.ParseUpstream(cfg.Upstream)
 		if err != nil {
 			return fmt.Errorf("parsing upstream: %w", err)
 		}
-		remoteDB := backend.NewRemoteDB(commons.DoltHubToken(), upOrg, upDB, cfg.ForkOrg, cfg.ForkDB, cfg.ResolveMode())
+		remoteDB := backend.NewRemoteDB(token, upOrg, upDB, cfg.ForkOrg, cfg.ForkDB, cfg.ResolveMode())
 		db = remoteDB
 
 		sp := style.StartSpinner(stderr, "Syncing fork with upstream...")
