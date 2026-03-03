@@ -16,8 +16,8 @@ VERSION    := $(shell git describe --tags --always --dirty 2>/dev/null || echo "
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Set to "false" to hide inference UI from CLI and web.
-INFER_ENABLED ?= true
+# Set to "true" to enable inference UI in CLI and web.
+INFER_ENABLED ?= false
 
 LDFLAGS := -X main.version=$(VERSION) \
            -X main.commit=$(COMMIT) \
