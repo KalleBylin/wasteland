@@ -2,6 +2,7 @@
 package xdg
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -10,21 +11,33 @@ const appName = "wasteland"
 
 // ConfigHome returns the XDG config home directory.
 // Uses $XDG_CONFIG_HOME if set, otherwise ~/.config.
+// Falls back to os.TempDir()/wasteland if home dir cannot be determined.
 func ConfigHome() string {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return dir
 	}
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fallback := filepath.Join(os.TempDir(), "wasteland")
+		fmt.Fprintf(os.Stderr, "warning: could not determine home directory: %v; using %s\n", err, fallback)
+		return fallback
+	}
 	return filepath.Join(home, ".config")
 }
 
 // DataHome returns the XDG data home directory.
 // Uses $XDG_DATA_HOME if set, otherwise ~/.local/share.
+// Falls back to os.TempDir()/wasteland if home dir cannot be determined.
 func DataHome() string {
 	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
 		return dir
 	}
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fallback := filepath.Join(os.TempDir(), "wasteland")
+		fmt.Fprintf(os.Stderr, "warning: could not determine home directory: %v; using %s\n", err, fallback)
+		return fallback
+	}
 	return filepath.Join(home, ".local", "share")
 }
 

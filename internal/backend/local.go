@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -51,7 +52,12 @@ func (l *LocalDB) Exec(branch, commitMsg string, signed bool, stmts ...string) e
 	err := commons.DoltSQLScript(l.dir, script)
 
 	if branch != "" {
-		_ = commons.CheckoutMain(l.dir)
+		if checkoutErr := commons.CheckoutMain(l.dir); checkoutErr != nil {
+			if err != nil {
+				return errors.Join(err, fmt.Errorf("checkout cleanup: %w", checkoutErr))
+			}
+			return fmt.Errorf("checkout main after branch exec: %w", checkoutErr)
+		}
 	}
 
 	return err
@@ -111,6 +117,8 @@ func (l *LocalDB) MergeBranch(branch string) error {
 
 // injectAsOf rewrites a SELECT query to include an AS OF clause.
 // It handles "FROM table" → "FROM table AS OF 'ref'" for each table reference.
+// NOTE: only handles the first FROM clause. Subqueries are not rewritten.
+// Callers needing multi-table AS OF should use explicit AS OF variants.
 func injectAsOf(sql, ref string) string {
 	escaped := commons.EscapeSQL(ref)
 	// Dolt supports AS OF at the query level: SELECT ... FROM t AS OF 'ref' WHERE ...

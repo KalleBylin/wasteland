@@ -288,7 +288,7 @@ func PushBranch(dbDir, branch string, stdout io.Writer) error {
 func ListBranches(dbDir, prefix string) ([]string, error) {
 	out, err := DoltSQLQuery(dbDir, fmt.Sprintf(
 		"SELECT name FROM dolt_branches WHERE name LIKE '%s%%' ORDER BY name",
-		strings.ReplaceAll(prefix, "'", "''"),
+		EscapeLIKE(prefix),
 	))
 	if err != nil {
 		return nil, err
@@ -311,13 +311,12 @@ func ListBranches(dbDir, prefix string) ([]string, error) {
 // remotes/origin/{prefix}* branches that don't already exist locally.
 // This makes origin branch data available to AS OF queries.
 func TrackOriginBranches(dbDir, prefix string) error {
-	escaped := strings.ReplaceAll(prefix, "'", "''")
 	remotePrefix := "remotes/origin/" + prefix
 
 	// Get remote branches.
 	out, err := DoltSQLQuery(dbDir, fmt.Sprintf(
 		"SELECT name FROM dolt_remote_branches WHERE name LIKE '%s%%' ORDER BY name",
-		strings.ReplaceAll(remotePrefix, "'", "''"),
+		EscapeLIKE(remotePrefix),
 	))
 	if err != nil {
 		return nil // best-effort; remote may not exist
@@ -358,7 +357,7 @@ func TrackOriginBranches(dbDir, prefix string) error {
 		remoteSet[strings.TrimPrefix(r, "remotes/origin/")] = true
 	}
 	for _, local := range localBranches {
-		if !strings.HasPrefix(local, escaped) {
+		if !strings.HasPrefix(local, prefix) {
 			continue
 		}
 		if !remoteSet[local] {
@@ -496,7 +495,7 @@ func ListWantedIDs(db DB, statusFilter string) ([]string, error) {
 
 // ResolveWantedID resolves a wanted ID or unambiguous prefix to a full ID.
 func ResolveWantedID(db DB, idOrPrefix string) (string, error) {
-	query := fmt.Sprintf("SELECT id FROM wanted WHERE id LIKE '%s%%' LIMIT 3", EscapeSQL(idOrPrefix))
+	query := fmt.Sprintf("SELECT id FROM wanted WHERE id LIKE '%s%%' LIMIT 3", EscapeLIKE(idOrPrefix))
 	out, err := db.Query(query, "")
 	if err != nil {
 		return "", err

@@ -102,7 +102,7 @@ func BuildBrowseQuery(f BrowseFilter) string {
 		}
 	}
 	if f.Search != "" {
-		conditions = append(conditions, fmt.Sprintf("title LIKE '%%%s%%'", EscapeSQL(f.Search)))
+		conditions = append(conditions, fmt.Sprintf("title LIKE '%%%s%%'", EscapeLIKE(f.Search)))
 	}
 
 	cols := "id, title, COALESCE(project,'') as project, COALESCE(type,'') as type, priority, COALESCE(posted_by,'') as posted_by, COALESCE(claimed_by,'') as claimed_by, status, COALESCE(effort_level,'medium') as effort_level"

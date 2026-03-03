@@ -220,6 +220,15 @@ func EscapeSQL(s string) string {
 	return strings.ReplaceAll(s, "'", "''")
 }
 
+// EscapeLIKE escapes SQL LIKE wildcards (% and _) in addition to standard
+// SQL escaping. Use this when interpolating user input into LIKE patterns.
+func EscapeLIKE(s string) string {
+	s = EscapeSQL(s)
+	s = strings.ReplaceAll(s, "%", `\%`)
+	s = strings.ReplaceAll(s, "_", `\_`)
+	return s
+}
+
 // CommitSQL returns the DOLT_COMMIT SQL statement, optionally with -S for GPG signing.
 func CommitSQL(msg string, signed bool) string {
 	if signed {

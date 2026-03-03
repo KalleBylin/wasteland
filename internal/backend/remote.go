@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/julianknutsen/wasteland/internal/commons"
 )
 
 // DoltHubAPIBase is the DoltHub REST API base URL. Var so tests can override.
@@ -141,7 +143,7 @@ func (r *RemoteDB) execOne(fromBranch, toBranch, stmt string) error {
 // Branches returns branch names matching the given prefix from the fork.
 func (r *RemoteDB) Branches(prefix string) ([]string, error) {
 	sql := fmt.Sprintf("SELECT name FROM dolt_branches WHERE name LIKE '%s%%' ORDER BY name",
-		strings.ReplaceAll(prefix, "'", "''"))
+		commons.EscapeLIKE(prefix))
 
 	// Query branches on the fork database.
 	apiURL := fmt.Sprintf("%s/%s/%s/main?q=%s",

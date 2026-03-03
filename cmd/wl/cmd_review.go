@@ -502,8 +502,8 @@ func wantedTitleFromBranch(doltPath, dbDir, branch string) string {
 	wantedID := extractWantedID(branch)
 	query := fmt.Sprintf(
 		"SELECT title FROM wanted AS OF '%s' WHERE id = '%s' LIMIT 1",
-		strings.ReplaceAll(branch, "'", "''"),
-		strings.ReplaceAll(wantedID, "'", "''"),
+		commons.EscapeSQL(branch),
+		commons.EscapeSQL(wantedID),
 	)
 	cmd := exec.Command(doltPath, "sql", "-r", "csv", "-q", query)
 	cmd.Dir = dbDir
