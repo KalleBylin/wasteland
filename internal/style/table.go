@@ -108,10 +108,12 @@ func (t *Table) Render() string {
 			if i < len(row) {
 				val = row[i]
 			}
-			// Truncate if too long
+			// Truncate if too long (rune-aware to avoid splitting multi-byte UTF-8).
 			plainVal := stripAnsi(val)
-			if len(plainVal) > col.Width {
-				val = plainVal[:col.Width-3] + "..."
+			plainRunes := []rune(plainVal)
+			if len(plainRunes) > col.Width {
+				val = string(plainRunes[:col.Width-3]) + "..."
+				plainVal = string(plainRunes[:col.Width-3]) + "..."
 			}
 			// Apply column style if set
 			if col.Style.Value() != "" {
@@ -131,7 +133,7 @@ func (t *Table) Render() string {
 // pad pads text to width, accounting for ANSI escape sequences.
 // styledText is the text with ANSI codes, plainText is without.
 func (t *Table) pad(styledText, plainText string, width int, align Alignment) string {
-	plainLen := len(plainText)
+	plainLen := len([]rune(plainText))
 	if plainLen >= width {
 		return styledText
 	}

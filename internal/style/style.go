@@ -78,7 +78,7 @@ func SetColorMode(mode string) {
 		Error = lipgloss.NewStyle()
 		Info = lipgloss.NewStyle()
 		Dim = lipgloss.NewStyle()
-		Bold = lipgloss.NewStyle()
+		Bold = lipgloss.NewStyle().Bold(true)
 	case "always":
 		_ = os.Unsetenv("NO_COLOR")
 		_ = os.Setenv("CLICOLOR_FORCE", "1")

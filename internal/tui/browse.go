@@ -326,8 +326,9 @@ func (m browseModel) view() string {
 	for i := startIdx; i < endIdx; i++ {
 		item := m.items[i]
 		title := item.Title
-		if len(title) > titleMax {
-			title = title[:titleMax-3] + "..."
+		titleRunes := []rune(title)
+		if len(titleRunes) > titleMax {
+			title = string(titleRunes[:titleMax-3]) + "..."
 		}
 		pri := padANSI(colorizePriority(item.Priority), 3)
 		status := colorizeStatus(item.Status)

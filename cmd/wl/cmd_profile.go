@@ -195,7 +195,7 @@ func runProfileSearch(_ *cobra.Command, stdout, _ io.Writer, query string) error
 }
 
 func printBar(w io.Writer, label string, value float64) {
-	value = clamp01(value)
+	value = clamp01(value / 5) // value is on 0-5 stamp scale; normalize to 0-1
 	pct := int(value * 100)
 	barLen := int(value * 20)
 	bar := strings.Repeat("\u2588", barLen) + strings.Repeat("\u2591", 20-barLen)
@@ -213,8 +213,9 @@ func clamp01(v float64) float64 {
 }
 
 func truncateField(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
 		return s
 	}
-	return s[:maxLen-3] + "..."
+	return string(runes[:maxLen-3]) + "..."
 }

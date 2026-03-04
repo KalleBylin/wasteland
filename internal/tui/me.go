@@ -166,8 +166,9 @@ func (m meModel) view() string {
 
 func (m meModel) renderRow(item commons.WantedSummary, flatIdx int) string {
 	title := item.Title
-	if len(title) > 30 {
-		title = title[:27] + "..."
+	titleRunes := []rune(title)
+	if len(titleRunes) > 30 {
+		title = string(titleRunes[:27]) + "..."
 	}
 	pri := colorizePriority(item.Priority)
 	status := colorizeStatus(item.Status)

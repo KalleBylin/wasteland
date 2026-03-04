@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/julianknutsen/wasteland/internal/commons"
 	"github.com/julianknutsen/wasteland/internal/sdk"
@@ -32,7 +33,7 @@ func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	key := canonicalBrowseKey(r)
+	key := client.RigHandle() + ":" + canonicalBrowseKey(r)
 	data, err := s.browseCache.GetOrFetch(key, func() ([]byte, error) {
 		filter := parseQueryFilter(r)
 		result, err := client.Browse(filter)
@@ -57,7 +58,8 @@ func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
-	data, err := s.detailCache.GetOrFetch(id, func() ([]byte, error) {
+	key := client.RigHandle() + ":" + id
+	data, err := s.detailCache.GetOrFetch(key, func() ([]byte, error) {
 		result, err := client.Detail(id)
 		if err != nil {
 			return nil, err
@@ -65,7 +67,11 @@ func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return json.Marshal(toDetailResponse(result, client.Mode()))
 	})
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		if strings.Contains(err.Error(), "not found") {
+			writeError(w, http.StatusNotFound, err.Error())
+		} else {
+			writeError(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

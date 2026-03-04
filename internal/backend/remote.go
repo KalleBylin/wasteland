@@ -537,14 +537,17 @@ func (r *RemoteDB) pollOperation(operationName string) error {
 			}
 
 			status = strings.ToLower(status)
-			if pollResp.Done || status == "success" || status == "successwithwarning" {
-				if status == "error" {
-					return fmt.Errorf("write operation failed: %s", message)
-				}
-				return nil
-			}
 			if status == "error" {
 				return fmt.Errorf("write operation failed: %s", message)
+			}
+			if status == "success" || status == "successwithwarning" {
+				return nil
+			}
+			if pollResp.Done {
+				if status == "" {
+					return fmt.Errorf("write operation %q finished with unknown status", operationName)
+				}
+				return nil
 			}
 		}
 
@@ -560,8 +563,9 @@ func (r *RemoteDB) pollOperation(operationName string) error {
 }
 
 func truncate(s string, n int) string {
-	if len(s) <= n {
+	runes := []rune(s)
+	if len(runes) <= n {
 		return s
 	}
-	return s[:n] + "..."
+	return string(runes[:n]) + "..."
 }

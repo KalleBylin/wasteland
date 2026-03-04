@@ -35,10 +35,10 @@ type ScoreboardEntryJSON struct {
 type CachedEndpoint struct {
 	mu        sync.RWMutex
 	cached    []byte // pre-serialized JSON
-	updatedAt time.Time
 	refreshFn func() ([]byte, error)
 	interval  time.Duration
 	done      chan struct{}
+	stopOnce  sync.Once
 }
 
 // NewCachedEndpoint creates a new cached endpoint with a generic refresh callback.
@@ -66,9 +66,9 @@ func (ce *CachedEndpoint) Start() {
 	go ce.run()
 }
 
-// Stop halts the background refresh goroutine.
+// Stop halts the background refresh goroutine. Safe to call multiple times.
 func (ce *CachedEndpoint) Stop() {
-	close(ce.done)
+	ce.stopOnce.Do(func() { close(ce.done) })
 }
 
 func (ce *CachedEndpoint) run() {
@@ -97,7 +97,6 @@ func (ce *CachedEndpoint) refresh() {
 
 	ce.mu.Lock()
 	ce.cached = data
-	ce.updatedAt = time.Now().UTC()
 	ce.mu.Unlock()
 }
 

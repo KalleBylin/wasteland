@@ -90,6 +90,9 @@ func (c *Client) Accept(wantedID string, input AcceptInput) (*MutationResult, er
 
 // Reject rejects a completion, reverting the item from in_review to claimed.
 func (c *Client) Reject(wantedID, reason string) (*MutationResult, error) {
+	if result := c.prIdempotent(wantedID, "claimed"); result != nil {
+		return result, nil
+	}
 	stmts := commons.RejectCompletionDML(wantedID)
 	msg := "wl reject: " + wantedID
 	if reason != "" {

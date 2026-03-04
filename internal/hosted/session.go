@@ -26,9 +26,26 @@ type SessionStore struct {
 	sessions map[string]*UserSession
 }
 
-// NewSessionStore creates a new empty SessionStore.
+// NewSessionStore creates a new empty SessionStore with periodic cleanup.
 func NewSessionStore() *SessionStore {
-	return &SessionStore{sessions: make(map[string]*UserSession)}
+	s := &SessionStore{sessions: make(map[string]*UserSession)}
+	go s.cleanup()
+	return s
+}
+
+// cleanup periodically removes expired sessions to prevent unbounded memory growth.
+func (s *SessionStore) cleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		s.mu.Lock()
+		for id, sess := range s.sessions {
+			if time.Since(sess.CreatedAt) > sessionTTL {
+				delete(s.sessions, id)
+			}
+		}
+		s.mu.Unlock()
+	}
 }
 
 // Create creates a new session with the given Nango connection ID.
@@ -137,22 +154,30 @@ func SignSessionCookie(sessionID, connectionID, secret string) string {
 
 // VerifySessionCookie verifies a signed session cookie in the new 3-segment format.
 // Returns (sessionID, connectionID, ok).
+// The signature is always a 64-char hex HMAC-SHA256. We split from the right
+// to handle connectionIDs that contain dots.
 func VerifySessionCookie(signed, secret string) (string, string, bool) {
-	// Split into exactly 3 segments: sessionID, connectionID, signature.
-	parts := strings.SplitN(signed, ".", 3)
-	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+	// The signature is the last 64 hex characters after the last dot.
+	lastDot := strings.LastIndex(signed, ".")
+	if lastDot < 1 || lastDot == len(signed)-1 {
 		return "", "", false
 	}
-	sessionID, connectionID, sig := parts[0], parts[1], parts[2]
+	payload := signed[:lastDot]
+	sig := signed[lastDot+1:]
 
-	payload := sessionID + "." + connectionID
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(payload))
 	expected := hex.EncodeToString(mac.Sum(nil))
 	if !hmac.Equal([]byte(sig), []byte(expected)) {
 		return "", "", false
 	}
-	return sessionID, connectionID, true
+
+	// Split payload into sessionID.connectionID at the first dot.
+	firstDot := strings.Index(payload, ".")
+	if firstDot < 1 || firstDot == len(payload)-1 {
+		return "", "", false
+	}
+	return payload[:firstDot], payload[firstDot+1:], true
 }
 
 // SetSessionCookie sets the wl_session cookie on the response.

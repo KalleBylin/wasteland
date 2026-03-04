@@ -102,7 +102,7 @@ func (wr *WorkspaceResolver) buildClient(wl *WastelandConfig, rigHandle, connect
 
 	mode := wl.Mode
 	if mode == "" {
-		mode = "wild-west"
+		mode = "pr"
 	}
 
 	db := backend.NewRemoteDB(apiKey, upOrg, upDB, wl.ForkOrg, wl.ForkDB, mode)

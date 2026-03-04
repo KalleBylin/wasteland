@@ -120,6 +120,9 @@ func runInferRun(cmd *cobra.Command, stdout, _ io.Writer, wantedID string, noPus
 	// Step 4: Submit completion.
 	doneResult, err := client.Done(wantedID, evidence)
 	if err != nil {
+		if !skipClaim {
+			_, _ = client.Unclaim(wantedID)
+		}
 		return fmt.Errorf("submitting completion: %w", err)
 	}
 

@@ -34,7 +34,7 @@ func DataHome() string {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fallback := filepath.Join(os.TempDir(), "wasteland")
+		fallback := filepath.Join(os.TempDir(), "wasteland-data")
 		fmt.Fprintf(os.Stderr, "warning: could not determine home directory: %v; using %s\n", err, fallback)
 		return fallback
 	}

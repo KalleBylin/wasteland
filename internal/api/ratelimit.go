@@ -2,6 +2,7 @@ package api
 
 import (
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ type RateLimiter struct {
 	rate     int           // tokens added per interval
 	burst    int           // max tokens (bucket capacity)
 	interval time.Duration // how often tokens are added
+	done     chan struct{}
 }
 
 type bucket struct {
@@ -30,9 +32,15 @@ func NewRateLimiter(rate int, burst int, interval time.Duration) *RateLimiter {
 		rate:     rate,
 		burst:    burst,
 		interval: interval,
+		done:     make(chan struct{}),
 	}
 	go rl.cleanup()
 	return rl
+}
+
+// Stop halts the background cleanup goroutine.
+func (rl *RateLimiter) Stop() {
+	close(rl.done)
 }
 
 // Allow checks whether a request from the given key should be allowed.
@@ -67,16 +75,22 @@ func (rl *RateLimiter) Allow(key string) bool {
 
 // cleanup removes stale buckets every 5 minutes to prevent memory growth.
 func (rl *RateLimiter) cleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
 	for {
-		time.Sleep(5 * time.Minute)
-		rl.mu.Lock()
-		cutoff := time.Now().Add(-10 * time.Minute)
-		for key, b := range rl.buckets {
-			if b.lastFill.Before(cutoff) {
-				delete(rl.buckets, key)
+		select {
+		case <-rl.done:
+			return
+		case <-ticker.C:
+			rl.mu.Lock()
+			cutoff := time.Now().Add(-10 * time.Minute)
+			for key, b := range rl.buckets {
+				if b.lastFill.Before(cutoff) {
+					delete(rl.buckets, key)
+				}
 			}
+			rl.mu.Unlock()
 		}
-		rl.mu.Unlock()
 	}
 }
 
@@ -90,8 +104,8 @@ func clientIP(r *http.Request) string {
 		}
 		return strings.TrimSpace(xff)
 	}
-	// Strip port from RemoteAddr.
-	if host, _, ok := strings.Cut(r.RemoteAddr, ":"); ok {
+	// Strip port from RemoteAddr (handles both IPv4 and IPv6).
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		return host
 	}
 	return r.RemoteAddr

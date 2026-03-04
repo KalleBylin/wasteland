@@ -1,6 +1,10 @@
 package tui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // Ayu theme colors for TUI contexts.
 var (
@@ -63,6 +67,6 @@ func colorizePriority(pri int) string {
 	case 1:
 		return styleP1.Render("P1")
 	default:
-		return styleDim.Render("P" + string(rune('0'+pri)))
+		return styleDim.Render(fmt.Sprintf("P%d", pri))
 	}
 }

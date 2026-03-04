@@ -7,7 +7,7 @@ import (
 
 func TestPrintBar_Normal(t *testing.T) {
 	var buf bytes.Buffer
-	printBar(&buf, "Test", 0.5)
+	printBar(&buf, "Test", 2.5) // 2.5/5 = 50%
 	out := buf.String()
 	if out == "" {
 		t.Fatal("expected output")
@@ -27,7 +27,7 @@ func TestPrintBar_Zero(t *testing.T) {
 
 func TestPrintBar_One(t *testing.T) {
 	var buf bytes.Buffer
-	printBar(&buf, "Test", 1.0)
+	printBar(&buf, "Test", 5.0) // 5.0/5 = 100%
 	out := buf.String()
 	if !contains(out, "100%") {
 		t.Errorf("expected 100%% in output, got: %q", out)
@@ -44,13 +44,13 @@ func TestPrintBar_NegativeClamps(t *testing.T) {
 	}
 }
 
-func TestPrintBar_OverOneClamps(t *testing.T) {
+func TestPrintBar_OverFiveClamps(t *testing.T) {
 	var buf bytes.Buffer
-	// Should not panic
-	printBar(&buf, "Test", 1.5)
+	// Should not panic; values > 5 are clamped to 100%
+	printBar(&buf, "Test", 7.5)
 	out := buf.String()
 	if !contains(out, "100%") {
-		t.Errorf("expected 100%% in output for >1 value, got: %q", out)
+		t.Errorf("expected 100%% in output for >5 value, got: %q", out)
 	}
 }
 

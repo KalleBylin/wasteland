@@ -109,8 +109,10 @@ func (c *Client) SaveSettings(mode string, signing bool) error {
 	if err := c.SaveConfig(mode, signing); err != nil {
 		return err
 	}
+	c.mu.Lock()
 	c.mode = mode
 	c.signing = signing
+	c.mu.Unlock()
 	return nil
 }
 

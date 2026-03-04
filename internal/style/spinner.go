@@ -45,6 +45,8 @@ func StartSpinner(w io.Writer, msg string) *Spinner {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
+		ticker := time.NewTicker(80 * time.Millisecond)
+		defer ticker.Stop()
 		i := 0
 		for {
 			select {
@@ -52,11 +54,10 @@ func StartSpinner(w io.Writer, msg string) *Spinner {
 				// Clear the spinner line.
 				fmt.Fprintf(s.w, "\r\033[K")
 				return
-			default:
+			case <-ticker.C:
 				frame := Dim.Render(frames[i%len(frames)])
 				fmt.Fprintf(s.w, "\r%s %s", frame, s.msg)
 				i++
-				time.Sleep(80 * time.Millisecond)
 			}
 		}
 	}()

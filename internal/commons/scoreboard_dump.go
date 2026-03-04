@@ -7,14 +7,14 @@ import (
 
 // RigRow is a public-safe row from the rigs table.
 type RigRow struct {
-	Handle      string `json:"handle"`
-	DisplayName string `json:"display_name,omitempty"`
-	DolthubOrg  string `json:"dolthub_org,omitempty"`
-	TrustLevel  int    `json:"trust_level"`
-	RegisterdAt string `json:"registered_at,omitempty"`
-	LastSeen    string `json:"last_seen,omitempty"`
-	RigType     string `json:"rig_type,omitempty"`
-	ParentRig   string `json:"parent_rig,omitempty"`
+	Handle       string `json:"handle"`
+	DisplayName  string `json:"display_name,omitempty"`
+	DolthubOrg   string `json:"dolthub_org,omitempty"`
+	TrustLevel   int    `json:"trust_level"`
+	RegisteredAt string `json:"registered_at,omitempty"`
+	LastSeen     string `json:"last_seen,omitempty"`
+	RigType      string `json:"rig_type,omitempty"`
+	ParentRig    string `json:"parent_rig,omitempty"`
 }
 
 // StampRow is a public-safe row from the stamps table.
@@ -119,14 +119,14 @@ FROM rigs ORDER BY handle`
 	for _, r := range rows {
 		tl, _ := strconv.Atoi(r["trust_level"])
 		result = append(result, RigRow{
-			Handle:      r["handle"],
-			DisplayName: r["display_name"],
-			DolthubOrg:  r["dolthub_org"],
-			TrustLevel:  tl,
-			RegisterdAt: r["registered_at"],
-			LastSeen:    r["last_seen"],
-			RigType:     r["rig_type"],
-			ParentRig:   r["parent_rig"],
+			Handle:       r["handle"],
+			DisplayName:  r["display_name"],
+			DolthubOrg:   r["dolthub_org"],
+			TrustLevel:   tl,
+			RegisteredAt: r["registered_at"],
+			LastSeen:     r["last_seen"],
+			RigType:      r["rig_type"],
+			ParentRig:    r["parent_rig"],
 		})
 	}
 	return result, nil

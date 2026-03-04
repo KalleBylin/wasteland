@@ -46,7 +46,7 @@ type BrowseFilter struct {
 	Search    string
 	MyItems   string    // rig handle for OR filter (posted_by OR claimed_by); empty = disabled
 	Sort      SortOrder // result ordering
-	View      string    // "mine" (default), "all", or "upstream"
+	View      string    // "all" (default), "mine", or "upstream"
 	Long      bool      // include description and other detail fields
 }
 
@@ -411,7 +411,7 @@ func QueryMyDashboard(db DB, handle string) (*DashboardData, error) {
 
 	// Recent completions.
 	completedQ := fmt.Sprintf(
-		"SELECT id, title, COALESCE(project,'') as project, COALESCE(type,'') as type, priority, COALESCE(posted_by,'') as posted_by, COALESCE(claimed_by,'') as claimed_by, status, COALESCE(effort_level,'medium') as effort_level FROM wanted WHERE status = 'completed' AND claimed_by = '%s' ORDER BY created_at DESC LIMIT 5",
+		"SELECT id, title, COALESCE(project,'') as project, COALESCE(type,'') as type, priority, COALESCE(posted_by,'') as posted_by, COALESCE(claimed_by,'') as claimed_by, status, COALESCE(effort_level,'medium') as effort_level FROM wanted WHERE status = 'completed' AND claimed_by = '%s' ORDER BY updated_at DESC LIMIT 5",
 		escaped)
 	csv, err = db.Query(completedQ, "")
 	if err != nil {
