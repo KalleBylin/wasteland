@@ -51,7 +51,7 @@ export function DetailView() {
   const [rigHandle, setRigHandle] = useState("");
 
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(
-    data?.item.status ?? "",
+    data?.item?.status ?? "",
     (_current: string, next: string) => next,
   );
 
@@ -215,7 +215,7 @@ export function DetailView() {
       </div>
     );
   if (error) return <p className={styles.errorText}>{error}</p>;
-  if (!data) return <p className={styles.notFound}>Not found.</p>;
+  if (!data || !data.item) return <p className={styles.notFound}>Not found.</p>;
 
   const { item, completion, stamp, branch, branch_url, main_status, pr_url, delta, actions, branch_actions } = data;
   const branchActions = branch_actions || [];

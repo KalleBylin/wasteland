@@ -140,7 +140,11 @@ func (c *Client) prIdempotentLocked(wantedID, targetStatus string) *MutationResu
 // mutatePRResult reads the current branch state and builds a MutationResult.
 // Used after Exec and also for the idempotency early-return path.
 func (c *Client) mutatePRResult(wantedID, branch, mainStatus string) *MutationResult {
-	item, completion, stamp, _ := commons.QueryFullDetailAsOf(c.db, wantedID, branch)
+	item, completion, stamp, err := commons.QueryFullDetailAsOf(c.db, wantedID, branch)
+	if err != nil || item == nil {
+		// Branch query failed — fall back to main so we never return a nil item.
+		item, completion, stamp, _ = commons.QueryFullDetailAsOf(c.db, wantedID, "")
+	}
 
 	detail := &DetailResult{
 		Item:       item,
