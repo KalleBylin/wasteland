@@ -557,6 +557,57 @@ func TestDoltHubProvider_ListPendingWantedIDs(t *testing.T) {
 	}
 }
 
+func TestDoltHubProvider_ListPendingWantedIDs_ForkQueryFails_DefaultsClaimed(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/org/db/pulls", func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/pulls/") {
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"pulls": []map[string]any{
+				{"pull_id": "1", "state": "open"},
+			},
+		})
+	})
+	mux.HandleFunc("/org/db/pulls/1", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"from_branch":       "wl/alice/w-001",
+			"from_branch_owner": "alice-fork",
+		})
+	})
+	// Fork query returns 404 (fork deleted, etc.).
+	mux.HandleFunc("/alice-fork/db/", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(404)
+		_, _ = w.Write([]byte("not found"))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	dolthubAPIBase = server.URL
+	dolthubRepoBase = server.URL + "/repositories"
+
+	provider := NewDoltHubProvider("")
+	ids, err := provider.ListPendingWantedIDs("org", "db")
+	if err != nil {
+		t.Fatalf("ListPendingWantedIDs() error: %v", err)
+	}
+	if len(ids) != 1 {
+		t.Fatalf("expected 1 pending ID, got %d", len(ids))
+	}
+	pending := ids["w-001"]
+	if len(pending) != 1 {
+		t.Fatalf("expected 1 pending item for w-001, got %d", len(pending))
+	}
+	if pending[0].Status != "claimed" {
+		t.Errorf("expected status=claimed (default), got %q", pending[0].Status)
+	}
+	if pending[0].ClaimedBy != "alice" {
+		t.Errorf("expected claimed_by=alice (from rig handle), got %q", pending[0].ClaimedBy)
+	}
+}
+
 func TestDoltHubProvider_ListPendingWantedIDs_SkipsNonWLBranches(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/org/db/pulls", func(w http.ResponseWriter, r *http.Request) {

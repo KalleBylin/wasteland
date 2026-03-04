@@ -670,7 +670,14 @@ func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[stri
 					}
 				}
 			}
-			// If fork query fails, still include with empty status (rig handle is known).
+			// If status is still empty (fork query failed or item not found on branch),
+			// default to "claimed" — having an open PR implies at least a claim.
+			if state.Status == "" {
+				state.Status = "claimed"
+			}
+			if state.ClaimedBy == "" {
+				state.ClaimedBy = pr.rigHandle
+			}
 
 			results <- indexedResult{idx: idx, state: state}
 		}(i, pr)
