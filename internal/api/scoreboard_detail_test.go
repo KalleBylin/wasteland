@@ -121,6 +121,6 @@ func newScoreboardDetailRefresh(db *fakeDB) func() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		return json.Marshal(toScoreboardDetailResponse(entries))
+		return json.Marshal(ToScoreboardDetailResponse(entries))
 	}
 }

@@ -271,7 +271,7 @@ func newDetailRefresh(db commons.DB) func() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		return json.Marshal(entries)
+		return json.Marshal(api.ToScoreboardDetailResponse(entries))
 	}
 }
 
@@ -282,6 +282,6 @@ func newDumpRefresh(db commons.DB) func() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		return json.Marshal(dump)
+		return json.Marshal(api.ToScoreboardDumpResponse(dump))
 	}
 }

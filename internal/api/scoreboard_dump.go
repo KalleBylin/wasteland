@@ -17,7 +17,8 @@ type ScoreboardDumpResponse struct {
 	UpdatedAt   string                  `json:"updated_at"`
 }
 
-func toScoreboardDumpResponse(dump *commons.ScoreboardDump) *ScoreboardDumpResponse {
+// ToScoreboardDumpResponse converts a commons dump to the JSON response type.
+func ToScoreboardDumpResponse(dump *commons.ScoreboardDump) *ScoreboardDumpResponse {
 	return &ScoreboardDumpResponse{
 		Rigs:        dump.Rigs,
 		Stamps:      dump.Stamps,

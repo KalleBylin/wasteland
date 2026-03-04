@@ -35,7 +35,8 @@ type ScoreboardDetailEntryJSON struct {
 	Badges         []commons.BadgeDetail      `json:"badges"`
 }
 
-func toScoreboardDetailResponse(entries []commons.ScoreboardDetailEntry) *ScoreboardDetailResponse {
+// ToScoreboardDetailResponse converts commons detail entries to the JSON response type.
+func ToScoreboardDetailResponse(entries []commons.ScoreboardDetailEntry) *ScoreboardDetailResponse {
 	items := make([]ScoreboardDetailEntryJSON, len(entries))
 	for i, e := range entries {
 		items[i] = ScoreboardDetailEntryJSON{
