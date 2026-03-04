@@ -207,6 +207,7 @@ func runServeHosted(cmd *cobra.Command, stdout, _ io.Writer) error {
 	if sessionSecret == "" {
 		return fmt.Errorf("WL_SESSION_SECRET environment variable is required for hosted mode")
 	}
+	environment := os.Getenv("WL_ENVIRONMENT")
 
 	// Optional env vars with defaults.
 	nangoBaseURL := os.Getenv("NANGO_BASE_URL")
@@ -251,7 +252,7 @@ func runServeHosted(cmd *cobra.Command, stdout, _ io.Writer) error {
 	apiServer.SetPublicClient(anonClient)
 
 	// Build the hosted server and compose handlers.
-	hostedServer := hosted.NewServer(resolver, sessions, nangoClient, sessionSecret)
+	hostedServer := hosted.NewServer(resolver, sessions, nangoClient, sessionSecret, environment)
 
 	hostedRateLimiter := api.NewRateLimiter(120, 120, time.Minute)
 	defer hostedRateLimiter.Stop()

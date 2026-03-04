@@ -11,7 +11,7 @@ export function Layout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const navigate = useNavigate();
-  const { wastelands, active, authenticated, switchTo } = useWasteland();
+  const { wastelands, active, authenticated, environment, switchTo } = useWasteland();
 
   const { register, getCommands, subscribe } = useCommandRegistry();
   const commands = useSyncExternalStore(subscribe, getCommands);
@@ -60,6 +60,7 @@ export function Layout() {
   return (
     <CommandsContext.Provider value={contextValue}>
       <div className={styles.layout}>
+        {environment === "staging" && <div className={styles.stagingBanner}>staging</div>}
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>

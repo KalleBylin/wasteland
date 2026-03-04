@@ -59,7 +59,7 @@ func setupHostedTestServer(t *testing.T) (*SessionStore, *httptest.Server) {
 	})
 	sessions := NewSessionStore()
 	resolver := NewWorkspaceResolver(nango, sessions)
-	server := NewServer(resolver, sessions, nango, testSecret)
+	server := NewServer(resolver, sessions, nango, testSecret, "")
 
 	// Create a simple test handler for the auth middleware.
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +131,7 @@ func setupMultiWastelandTestServer(t *testing.T) (*SessionStore, *httptest.Serve
 	})
 	sessions := NewSessionStore()
 	resolver := NewWorkspaceResolver(nango, sessions)
-	server := NewServer(resolver, sessions, nango, testSecret)
+	server := NewServer(resolver, sessions, nango, testSecret, "")
 
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
@@ -662,7 +662,7 @@ func TestHandleLeaveWasteland(t *testing.T) {
 	})
 	sessions := NewSessionStore()
 	resolver := NewWorkspaceResolver(nango, sessions)
-	server := NewServer(resolver, sessions, nango, testSecret)
+	server := NewServer(resolver, sessions, nango, testSecret, "")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("DELETE /api/auth/wastelands/{upstream...}", server.handleLeaveWasteland)
@@ -765,7 +765,7 @@ func TestAuthMiddleware_RehydrateFails_InvalidConnection(t *testing.T) {
 	})
 	sessions := NewSessionStore()
 	resolver := NewWorkspaceResolver(nango, sessions)
-	server := NewServer(resolver, sessions, nango, testSecret)
+	server := NewServer(resolver, sessions, nango, testSecret, "")
 
 	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)

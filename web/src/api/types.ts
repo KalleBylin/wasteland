@@ -108,6 +108,7 @@ export interface AuthStatusResponse {
   connected: boolean;
   rig_handle?: string;
   wastelands?: WastelandConfig[];
+  environment?: string;
 }
 
 export interface ConnectSessionResponse {

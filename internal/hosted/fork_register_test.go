@@ -273,7 +273,7 @@ func setupTestServer(t *testing.T, apiKey string, registrar ForkRegistrar) (*Ser
 	})
 	sessions := NewSessionStore()
 	resolver := NewWorkspaceResolver(nango, sessions)
-	server := NewServer(resolver, sessions, nango, "session-secret")
+	server := NewServer(resolver, sessions, nango, "session-secret", "")
 	server.forkRegistrar = registrar
 
 	mux := http.NewServeMux()

@@ -7,6 +7,7 @@ interface WastelandContextValue {
   wastelands: WastelandConfig[];
   active: string | null;
   authenticated: boolean;
+  environment?: string;
   switchTo: (upstream: string) => void;
   refresh: () => Promise<void>;
 }
@@ -24,6 +25,7 @@ const STORAGE_KEY = "wl_active";
 export function WastelandProvider({ children }: { children: ReactNode }) {
   const [wastelands, setWastelands] = useState<WastelandConfig[]>([]);
   const [active, setActive] = useState<string | null>(null);
+  const [environment, setEnvironment] = useState<string | undefined>();
 
   const applyActive = useCallback((upstream: string | null) => {
     setActive(upstream);
@@ -40,6 +42,7 @@ export function WastelandProvider({ children }: { children: ReactNode }) {
       const status = await authStatus();
       const wls = status.wastelands ?? [];
       setWastelands(wls);
+      setEnvironment(status.environment);
 
       if (wls.length === 0) {
         applyActive(null);
@@ -69,8 +72,8 @@ export function WastelandProvider({ children }: { children: ReactNode }) {
   const authenticated = wastelands.length > 0;
 
   const value = useMemo(
-    () => ({ wastelands, active, authenticated, switchTo, refresh }),
-    [wastelands, active, authenticated, switchTo, refresh],
+    () => ({ wastelands, active, authenticated, environment, switchTo, refresh }),
+    [wastelands, active, authenticated, environment, switchTo, refresh],
   );
 
   return <WastelandContext.Provider value={value}>{children}</WastelandContext.Provider>;

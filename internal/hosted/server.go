@@ -18,16 +18,18 @@ type Server struct {
 	nango         *NangoClient
 	sessionSecret string
 	forkRegistrar ForkRegistrar
+	environment   string // "staging", "production", or "" (unset)
 }
 
 // NewServer creates a hosted Server.
-func NewServer(resolver *WorkspaceResolver, sessions *SessionStore, nango *NangoClient, sessionSecret string) *Server {
+func NewServer(resolver *WorkspaceResolver, sessions *SessionStore, nango *NangoClient, sessionSecret, environment string) *Server {
 	return &Server{
 		resolver:      resolver,
 		sessions:      sessions,
 		nango:         nango,
 		sessionSecret: sessionSecret,
 		forkRegistrar: &DoltHubForkRegistrar{},
+		environment:   environment,
 	}
 }
 
@@ -151,24 +153,25 @@ type authStatusResponse struct {
 	Connected     bool              `json:"connected"`
 	RigHandle     string            `json:"rig_handle,omitempty"`
 	Wastelands    []WastelandConfig `json:"wastelands,omitempty"`
+	Environment   string            `json:"environment,omitempty"`
 }
 
 // handleAuthStatus returns the current session state.
 func (s *Server) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	sessionID, _, ok := ReadSessionCookie(r, s.sessionSecret)
 	if !ok {
-		writeJSON(w, http.StatusOK, authStatusResponse{})
+		writeJSON(w, http.StatusOK, authStatusResponse{Environment: s.environment})
 		return
 	}
 
 	session, ok := s.sessions.Get(sessionID)
 	if !ok {
-		writeJSON(w, http.StatusOK, authStatusResponse{})
+		writeJSON(w, http.StatusOK, authStatusResponse{Environment: s.environment})
 		return
 	}
 
 	if session.ConnectionID == "" {
-		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true})
+		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true, Environment: s.environment})
 		return
 	}
 
@@ -176,12 +179,12 @@ func (s *Server) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	_, meta, err := s.nango.GetConnection(session.ConnectionID)
 	if err != nil {
 		// Nango call failed -- report as not connected so frontend can re-auth.
-		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true, Connected: false})
+		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true, Connected: false, Environment: s.environment})
 		return
 	}
 
 	if meta == nil {
-		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true, Connected: false})
+		writeJSON(w, http.StatusOK, authStatusResponse{Authenticated: true, Connected: false, Environment: s.environment})
 		return
 	}
 
@@ -190,6 +193,7 @@ func (s *Server) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 		Connected:     true,
 		RigHandle:     meta.RigHandle,
 		Wastelands:    meta.Wastelands,
+		Environment:   s.environment,
 	})
 }
 
