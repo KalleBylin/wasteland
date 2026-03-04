@@ -34,17 +34,29 @@ func (c *Client) Browse(filter commons.BrowseFilter) (*BrowseResult, error) {
 	}
 
 	// In "all" view, merge upstream PR IDs if the callback is set.
+	var upstreamIDs map[string]string
 	view := filter.View
 	if view == "" {
 		view = "all"
 	}
 	if view == "all" && c.ListPendingItems != nil {
-		upstreamIDs, err := c.ListPendingItems()
+		upstreamIDs, err = c.ListPendingItems()
 		if err == nil {
 			for id := range upstreamIDs {
 				if pendingIDs[id] == 0 {
 					pendingIDs[id] = 1
 				}
+			}
+		}
+	}
+
+	// Set ClaimedBy from pending PRs for items not already claimed on main.
+	for i := range items {
+		if items[i].ClaimedBy == "" && pendingIDs[items[i].ID] > 0 {
+			if pendingIDs[items[i].ID] > 1 {
+				items[i].ClaimedBy = "Multiple (pending)"
+			} else if rig := upstreamIDs[items[i].ID]; rig != "" {
+				items[i].ClaimedBy = rig + " (pending)"
 			}
 		}
 	}

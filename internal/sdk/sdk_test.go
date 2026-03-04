@@ -773,6 +773,76 @@ func TestBrowse_Long(t *testing.T) {
 	}
 }
 
+func TestBrowse_PendingClaimedBy_Single(t *testing.T) {
+	db := newFakeDB()
+	db.seedItem(fakeItem{ID: "w-1", Title: "Fix bug", Status: "open", Priority: 1, PostedBy: "alice", EffortLevel: "medium"})
+	db.seedItem(fakeItem{ID: "w-2", Title: "Add feature", Status: "claimed", ClaimedBy: "bob", Priority: 2, PostedBy: "alice", EffortLevel: "medium"})
+
+	c := New(ClientConfig{
+		DB:        db,
+		RigHandle: "alice",
+		Mode:      "wild-west",
+		ListPendingItems: func() (map[string]string, error) {
+			return map[string]string{"w-1": "charlie"}, nil
+		},
+	})
+
+	result, err := c.Browse(commons.BrowseFilter{})
+	if err != nil {
+		t.Fatalf("Browse: %v", err)
+	}
+
+	for _, item := range result.Items {
+		switch item.ID {
+		case "w-1":
+			if item.ClaimedBy != "charlie (pending)" {
+				t.Errorf("w-1: expected ClaimedBy='charlie (pending)', got %q", item.ClaimedBy)
+			}
+		case "w-2":
+			// Already claimed on main — should not be overwritten.
+			if item.ClaimedBy != "bob" {
+				t.Errorf("w-2: expected ClaimedBy='bob', got %q", item.ClaimedBy)
+			}
+		}
+	}
+}
+
+func TestBrowse_PendingClaimedBy_PreservesExisting(t *testing.T) {
+	db := newFakeDB()
+	// In PR mode, branch overlays set ClaimedBy before upstream merge.
+	// Verify upstream doesn't overwrite branch-overlay ClaimedBy.
+	db.seedItem(fakeItem{ID: "w-1", Title: "Fix bug", Status: "open", Priority: 1, PostedBy: "alice", EffortLevel: "medium"})
+	db.branches["wl/bob/w-1"] = true
+	db.branchItems["wl/bob/w-1"] = map[string]*fakeItem{
+		"w-1": {ID: "w-1", Title: "Fix bug", Status: "claimed", ClaimedBy: "bob", PostedBy: "alice", EffortLevel: "medium"},
+	}
+
+	c := New(ClientConfig{
+		DB:        db,
+		RigHandle: "bob",
+		Mode:      "pr",
+		ListPendingItems: func() (map[string]string, error) {
+			return map[string]string{"w-1": "charlie"}, nil
+		},
+	})
+
+	result, err := c.Browse(commons.BrowseFilter{})
+	if err != nil {
+		t.Fatalf("Browse: %v", err)
+	}
+
+	for _, item := range result.Items {
+		if item.ID == "w-1" {
+			// Branch overlay set ClaimedBy="bob"; upstream should NOT overwrite.
+			if item.ClaimedBy != "bob" {
+				t.Errorf("w-1: expected ClaimedBy='bob' (from branch overlay), got %q", item.ClaimedBy)
+			}
+			return
+		}
+	}
+	t.Error("w-1 not found in results")
+}
+
 func TestDetail_WildWest(t *testing.T) {
 	db := newFakeDB()
 	db.seedItem(fakeItem{ID: "w-1", Title: "Fix bug", Status: "open", Priority: 1, PostedBy: "alice", EffortLevel: "medium"})

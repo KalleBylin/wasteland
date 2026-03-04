@@ -809,7 +809,7 @@ func closePRForBranch(cfg *federation.Config, branch string) error {
 // listPendingItemsFromPRs returns a callback that lists wanted IDs with open
 // upstream PRs. Uses a 30-second TTL cache to avoid hammering the API.
 // Returns nil if the provider type does not support PR listing.
-func listPendingItemsFromPRs(cfg *federation.Config) func() (map[string]bool, error) {
+func listPendingItemsFromPRs(cfg *federation.Config) func() (map[string]string, error) {
 	switch cfg.ResolveProviderType() {
 	case "dolthub":
 		return dolthubListPendingItems(cfg)
@@ -824,7 +824,7 @@ func listPendingItemsFromPRs(cfg *federation.Config) func() (map[string]bool, er
 	}
 }
 
-func dolthubListPendingItems(cfg *federation.Config) func() (map[string]bool, error) {
+func dolthubListPendingItems(cfg *federation.Config) func() (map[string]string, error) {
 	token := commons.DoltHubToken()
 	if token == "" {
 		return nil
@@ -836,12 +836,12 @@ func dolthubListPendingItems(cfg *federation.Config) func() (map[string]bool, er
 
 	var (
 		mu       sync.Mutex
-		cached   map[string]bool
+		cached   map[string]string
 		cachedAt time.Time
 		cacheTTL = 30 * time.Second
 	)
 
-	return func() (map[string]bool, error) {
+	return func() (map[string]string, error) {
 		mu.Lock()
 		defer mu.Unlock()
 		if cached != nil && time.Since(cachedAt) < cacheTTL {
@@ -858,14 +858,14 @@ func dolthubListPendingItems(cfg *federation.Config) func() (map[string]bool, er
 	}
 }
 
-func ghListPendingItems(ghPath, upstreamRepo string) func() (map[string]bool, error) {
+func ghListPendingItems(ghPath, upstreamRepo string) func() (map[string]string, error) {
 	var (
 		mu       sync.Mutex
-		cached   map[string]bool
+		cached   map[string]string
 		cachedAt time.Time
 		cacheTTL = 30 * time.Second
 	)
-	return func() (map[string]bool, error) {
+	return func() (map[string]string, error) {
 		mu.Lock()
 		defer mu.Unlock()
 		if cached != nil && time.Since(cachedAt) < cacheTTL {
@@ -885,11 +885,11 @@ func ghListPendingItems(ghPath, upstreamRepo string) func() (map[string]bool, er
 		if err := json.Unmarshal(out, &prs); err != nil {
 			return nil, fmt.Errorf("parsing GitHub PRs: %w", err)
 		}
-		ids := make(map[string]bool)
+		ids := make(map[string]string)
 		for _, pr := range prs {
-			wantedID := extractWantedID(pr.Head.Ref)
-			if wantedID != pr.Head.Ref { // only wl/ prefixed branches
-				ids[wantedID] = true
+			parts := strings.SplitN(pr.Head.Ref, "/", 3)
+			if len(parts) == 3 && parts[0] == "wl" {
+				ids[parts[2]] = parts[1]
 			}
 		}
 		cached = ids

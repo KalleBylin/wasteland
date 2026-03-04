@@ -162,7 +162,7 @@ func (wr *WorkspaceResolver) buildClient(wl *WastelandConfig, rigHandle, connect
 			}
 			return provider.ClosePR(upOrg, upDB, prID)
 		},
-		ListPendingItems: func() (map[string]bool, error) {
+		ListPendingItems: func() (map[string]string, error) {
 			return provider.ListPendingWantedIDs(upOrg, upDB)
 		},
 		BranchURL: branchURL,

@@ -510,11 +510,11 @@ func TestDoltHubProvider_ListPendingWantedIDs(t *testing.T) {
 		t.Fatalf("ListPendingWantedIDs() error: %v", err)
 	}
 
-	if !ids["fix-login"] {
-		t.Errorf("expected fix-login in pending IDs")
+	if ids["fix-login"] != "alice" {
+		t.Errorf("expected fix-login → alice, got %q", ids["fix-login"])
 	}
-	if !ids["add-feature"] {
-		t.Errorf("expected add-feature in pending IDs")
+	if ids["add-feature"] != "bob" {
+		t.Errorf("expected add-feature → bob, got %q", ids["add-feature"])
 	}
 	if len(ids) != 2 {
 		t.Errorf("expected 2 pending IDs, got %d", len(ids))

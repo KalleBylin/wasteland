@@ -528,13 +528,13 @@ func (d *DoltHubProvider) ClosePR(upstreamOrg, db, prID string) error {
 // ListPendingWantedIDs returns a set of wanted IDs that have open upstream PRs.
 // It lists open PRs on the upstream repo, fetches each PR's detail to get the
 // from_branch, and extracts the wanted ID from the wl/{rig}/{wantedID} convention.
-func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[string]bool, error) {
+func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[string]string, error) {
 	pulls, err := d.listPulls(upstreamOrg, db)
 	if err != nil {
 		return nil, fmt.Errorf("listing PRs: %w", err)
 	}
 
-	ids := make(map[string]bool)
+	ids := make(map[string]string)
 	for _, pr := range pulls {
 		if !strings.EqualFold(pr.State, "open") {
 			continue
@@ -550,7 +550,7 @@ func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[stri
 		if err := json.Unmarshal(detail, &prDetail); err != nil {
 			continue
 		}
-		// Extract wanted ID from wl/{rig}/{wantedID} convention.
+		// Extract rig handle and wanted ID from wl/{rig}/{wantedID} convention.
 		if !strings.HasPrefix(prDetail.FromBranch, "wl/") {
 			continue
 		}
@@ -559,9 +559,10 @@ func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[stri
 		if slashIdx < 0 {
 			continue
 		}
+		rigHandle := rest[:slashIdx]
 		wantedID := rest[slashIdx+1:]
 		if wantedID != "" {
-			ids[wantedID] = true
+			ids[wantedID] = rigHandle
 		}
 	}
 	return ids, nil
