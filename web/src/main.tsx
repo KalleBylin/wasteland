@@ -9,7 +9,10 @@ import "./styles/global.css";
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN || "",
   environment: import.meta.env.VITE_ENVIRONMENT || "development",
-  integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+  integrations: Sentry.getDefaultIntegrations({}).concat([
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ]),
   tracesSampleRate: 0.2,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
