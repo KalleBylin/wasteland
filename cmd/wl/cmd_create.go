@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
-	"github.com/julianknutsen/wasteland/internal/remote"
-	"github.com/julianknutsen/wasteland/internal/style"
-	"github.com/julianknutsen/wasteland/schema"
+	"github.com/gastownhall/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/remote"
+	"github.com/gastownhall/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/schema"
 	"github.com/spf13/cobra"
 )
 

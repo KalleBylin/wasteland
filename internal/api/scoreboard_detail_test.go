@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 func TestScoreboardDetail_Handler(t *testing.T) {

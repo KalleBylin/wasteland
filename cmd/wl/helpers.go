@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/style"
 )
 
 // updateSyncTimestamp records a successful sync in the config.

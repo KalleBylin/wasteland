@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/federation"
 )
 
 // fakeConfigStore implements federation.ConfigStore for testing.

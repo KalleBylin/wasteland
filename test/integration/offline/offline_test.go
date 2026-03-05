@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/schema"
+	"github.com/gastownhall/wasteland/schema"
 )
 
 var (

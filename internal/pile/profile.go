@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // Profile is a developer's character sheet assembled from the-pile data.

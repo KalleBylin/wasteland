@@ -173,7 +173,7 @@ func TestParseMetadata_NewFormat(t *testing.T) {
 		"rig_handle": "alice",
 		"wastelands": [
 			{"upstream": "hop/wl-commons", "fork_org": "alice-org", "fork_db": "wl-commons", "mode": "wild-west"},
-			{"upstream": "julianknutsen/gascity", "fork_org": "alice-org", "fork_db": "gascity", "mode": "pr"}
+			{"upstream": "gastownhall/gascity", "fork_org": "alice-org", "fork_db": "gascity", "mode": "pr"}
 		]
 	}`)
 	meta := parseMetadata(raw)

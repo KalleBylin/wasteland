@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/julianknutsen/wasteland/internal/federation"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // newSDKClient creates an SDK client from a federation config with all mutation

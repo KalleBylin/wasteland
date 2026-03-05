@@ -103,7 +103,7 @@ func setupMultiWastelandTestServer(t *testing.T) (*SessionStore, *httptest.Serve
 		RigHandle: "alice",
 		Wastelands: []WastelandConfig{
 			{Upstream: "hop/wl-commons", ForkOrg: "alice-org", ForkDB: "wl-commons", Mode: "wild-west"},
-			{Upstream: "julianknutsen/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
+			{Upstream: "gastownhall/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
 		},
 	}
 
@@ -562,7 +562,7 @@ func TestHandleJoinWasteland(t *testing.T) {
 	body := `{
 		"fork_org": "alice-org",
 		"fork_db": "gascity",
-		"upstream": "julianknutsen/gascity"
+		"upstream": "gastownhall/gascity"
 	}`
 	req, _ := http.NewRequest("POST", ts.URL+"/api/auth/join", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -634,7 +634,7 @@ func TestHandleLeaveWasteland(t *testing.T) {
 		RigHandle: "alice",
 		Wastelands: []WastelandConfig{
 			{Upstream: "hop/wl-commons", ForkOrg: "alice-org", ForkDB: "wl-commons", Mode: "wild-west"},
-			{Upstream: "julianknutsen/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
+			{Upstream: "gastownhall/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
 		},
 	}
 

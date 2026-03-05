@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/julianknutsen/wasteland/internal/inference"
-	"github.com/julianknutsen/wasteland/internal/sdk"
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/internal/inference"
+	"github.com/gastownhall/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 

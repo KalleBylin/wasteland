@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/federation"
-	"github.com/julianknutsen/wasteland/internal/sdk"
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 

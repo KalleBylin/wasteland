@@ -3,7 +3,7 @@ package sdk
 import (
 	"fmt"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // AcceptInput holds the parameters for accepting a completion.

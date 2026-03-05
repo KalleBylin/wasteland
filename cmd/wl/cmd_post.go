@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/sdk"
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 

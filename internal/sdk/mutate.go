@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // MutationResult holds the outcome of a mutation operation.

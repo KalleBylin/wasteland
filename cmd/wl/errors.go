@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/federation"
 )
 
 // HintedError wraps an error with a user-facing recovery hint.

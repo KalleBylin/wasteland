@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // ScoreboardDumpResponse is the JSON response for GET /api/scoreboard/dump.

@@ -5,8 +5,8 @@ import (
 
 	bubbletea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // Config holds the parameters needed to launch the TUI.

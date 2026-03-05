@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/federation"
 )
 
 func TestHintedError_Unwrap(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // ScoreboardResponse is the JSON response for GET /api/scoreboard.

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // --- fakeDB: in-memory commons.DB for SDK tests ---

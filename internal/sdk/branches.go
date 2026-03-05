@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // ApplyBranch merges a mutation branch into main, deletes the branch, and pushes.

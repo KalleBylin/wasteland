@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/backend"
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/federation"
-	"github.com/julianknutsen/wasteland/internal/remote"
+	"github.com/gastownhall/wasteland/internal/backend"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/remote"
 )
 
 // ForkRegistrar creates the DoltHub fork and registers the rig.

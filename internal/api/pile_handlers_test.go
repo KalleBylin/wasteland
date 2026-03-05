@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/pile"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/pile"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // fakePileQuerier returns canned rows for profile queries.

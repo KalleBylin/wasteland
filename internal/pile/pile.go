@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/backend"
+	"github.com/gastownhall/wasteland/internal/backend"
 )
 
 // Client is a read-only DoltHub API client for hop/the-pile.

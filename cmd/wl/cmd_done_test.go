@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // Business logic tests for submitting completions moved to internal/sdk/.

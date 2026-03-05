@@ -7,7 +7,7 @@ package sdk
 import (
 	"sync"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // ClientConfig holds the parameters needed to create a Client.

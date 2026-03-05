@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 	"github.com/spf13/cobra"
 )
 

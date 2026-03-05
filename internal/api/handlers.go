@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // resolveClient extracts the sdk.Client from the request. Returns false if

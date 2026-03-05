@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/federation"
 	"github.com/spf13/cobra"
 )
 

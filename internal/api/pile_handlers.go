@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/julianknutsen/wasteland/internal/pile"
+	"github.com/gastownhall/wasteland/internal/pile"
 )
 
 const maxProfileSearchLimit = 100

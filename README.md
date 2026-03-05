@@ -359,7 +359,7 @@ Then `sudo mv wl /usr/local/bin/`.
 ### From source
 
 ```bash
-go install github.com/julianknutsen/wasteland/cmd/wl@v0.3.0
+go install github.com/gastownhall/wasteland/cmd/wl@v0.3.0
 ```
 
 Requires [Go 1.24+](https://go.dev/dl/).

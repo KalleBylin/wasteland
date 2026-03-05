@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/remote"
+	"github.com/gastownhall/wasteland/internal/remote"
 )
 
 // tempDir creates a temp directory with best-effort cleanup. Unlike tempDir(t),

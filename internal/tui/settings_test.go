@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	bubbletea "github.com/charmbracelet/bubbletea"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 func settingsClient(saveErr error) *sdk.Client {

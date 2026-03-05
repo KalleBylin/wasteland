@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // Business logic tests for accepting moved to internal/sdk/ (sdk_test.go, lifecycle_test.go).

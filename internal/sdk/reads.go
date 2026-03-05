@@ -1,7 +1,7 @@
 package sdk
 
 import (
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // PendingItem represents state from a pending upstream PR's fork branch.

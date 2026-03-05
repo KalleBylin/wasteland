@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/backend"
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/schema"
+	"github.com/gastownhall/wasteland/internal/backend"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/schema"
 )
 
 var doltPath string

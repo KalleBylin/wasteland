@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/federation"
 )
 
 // resolveWantedArg resolves a wanted ID or prefix to a full ID using the config-aware database.

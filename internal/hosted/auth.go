@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 type contextKey string

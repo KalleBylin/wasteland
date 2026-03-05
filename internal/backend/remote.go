@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/commons"
 )
 
 // DoltHubAPIBase is the DoltHub REST API base URL. Var so tests can override.

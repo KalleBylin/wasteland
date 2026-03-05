@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/api"
+	"github.com/gastownhall/wasteland/internal/api"
 )
 
 // TestHostedEndToEnd exercises the full flow: auth middleware -> api.Server routes

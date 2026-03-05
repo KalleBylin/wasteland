@@ -5,7 +5,7 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/julianknutsen/wasteland/internal/style"
+	"github.com/gastownhall/wasteland/internal/style"
 	"github.com/spf13/cobra"
 )
 

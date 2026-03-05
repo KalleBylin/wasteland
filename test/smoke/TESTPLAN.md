@@ -274,7 +274,7 @@ wl create --help
 ## Test 8: go install verification
 
 ```bash
-go install github.com/julianknutsen/wasteland/cmd/wl@latest
+go install github.com/gastownhall/wasteland/cmd/wl@latest
 ```
 
 **Expected:** exits successfully (requires tag to be pushed; use `@main` before tagging)

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // --- Response types ---

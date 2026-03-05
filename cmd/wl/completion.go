@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/federation"
 	"github.com/spf13/cobra"
 )
 

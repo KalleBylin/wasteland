@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/pile"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/pile"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // ClientFunc resolves an sdk.Client from an HTTP request. In self-sovereign mode

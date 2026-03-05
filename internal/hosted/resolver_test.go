@@ -242,7 +242,7 @@ func TestWorkspaceResolver_MultipleWastelands(t *testing.T) {
 		RigHandle: "alice",
 		Wastelands: []WastelandConfig{
 			{Upstream: "hop/wl-commons", ForkOrg: "alice-org", ForkDB: "wl-commons", Mode: "wild-west"},
-			{Upstream: "julianknutsen/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
+			{Upstream: "gastownhall/gascity", ForkOrg: "alice-org", ForkDB: "gascity", Mode: "pr"},
 		},
 	}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -284,9 +284,9 @@ func TestWorkspaceResolver_MultipleWastelands(t *testing.T) {
 		t.Errorf("expected wild-west, got %s", c1.Mode())
 	}
 
-	c2, err := ws.Client("julianknutsen/gascity")
+	c2, err := ws.Client("gastownhall/gascity")
 	if err != nil {
-		t.Fatalf("expected client for julianknutsen/gascity: %v", err)
+		t.Fatalf("expected client for gastownhall/gascity: %v", err)
 	}
 	if c2.Mode() != "pr" {
 		t.Errorf("expected pr, got %s", c2.Mode())

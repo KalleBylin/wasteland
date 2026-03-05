@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/inference"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/inference"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // Tests that modify inference.OllamaURL must not use t.Parallel().

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julianknutsen/wasteland/internal/api"
-	"github.com/julianknutsen/wasteland/internal/sdk"
+	"github.com/gastownhall/wasteland/internal/api"
+	"github.com/gastownhall/wasteland/internal/sdk"
 )
 
 // Server provides hosted-mode handler composition.

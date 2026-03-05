@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/julianknutsen/wasteland/internal/backend"
-	"github.com/julianknutsen/wasteland/internal/commons"
-	"github.com/julianknutsen/wasteland/internal/federation"
+	"github.com/gastownhall/wasteland/internal/backend"
+	"github.com/gastownhall/wasteland/internal/commons"
+	"github.com/gastownhall/wasteland/internal/federation"
 )
 
 // openDB creates a commons.DB for the given local database directory.
