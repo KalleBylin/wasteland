@@ -4,6 +4,8 @@ WORKDIR /app/web
 COPY web/package.json web/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY web/ .
+ARG VITE_SENTRY_DSN
+ARG VITE_ENVIRONMENT
 RUN bun run build
 
 # Stage 2: Build Go binary
