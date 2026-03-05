@@ -887,7 +887,7 @@ func ghListPendingItems(ghPath, upstreamRepo string) func() (map[string][]sdk.Pe
 		if cached != nil && time.Since(cachedAt) < cacheTTL {
 			return cached, nil
 		}
-		out, err := exec.Command(ghPath, "api",
+		out, err := exec.Command(ghPath, "api", "--paginate",
 			fmt.Sprintf("repos/%s/pulls?state=open&per_page=100", upstreamRepo),
 		).CombinedOutput()
 		if err != nil {
@@ -897,18 +897,44 @@ func ghListPendingItems(ghPath, upstreamRepo string) func() (map[string][]sdk.Pe
 			Head struct {
 				Ref string `json:"ref"`
 			} `json:"head"`
+			Title string `json:"title"`
+			User  struct {
+				Login string `json:"login"`
+			} `json:"user"`
 		}
 		if err := json.Unmarshal(out, &prs); err != nil {
 			return nil, fmt.Errorf("parsing GitHub PRs: %w", err)
 		}
 		ids := make(map[string][]sdk.PendingItem)
 		for _, pr := range prs {
+			var rigHandle, wantedID string
+
+			// Primary: parse wl/{rig}/{wantedID} branch convention.
 			parts := strings.SplitN(pr.Head.Ref, "/", 3)
 			if len(parts) == 3 && parts[0] == "wl" {
-				ids[parts[2]] = append(ids[parts[2]], sdk.PendingItem{
-					RigHandle: parts[1],
-				})
+				rigHandle = parts[1]
+				wantedID = parts[2]
 			}
+
+			// Fallback: extract wanted ID from branch name or title.
+			if wantedID == "" {
+				if m := remote.WantedIDPattern.FindString(pr.Head.Ref); m != "" {
+					wantedID = m
+				} else if m := remote.WantedIDPattern.FindString(pr.Title); m != "" {
+					wantedID = m
+				}
+			}
+
+			if wantedID == "" {
+				continue
+			}
+			if rigHandle == "" {
+				rigHandle = pr.User.Login
+			}
+
+			ids[wantedID] = append(ids[wantedID], sdk.PendingItem{
+				RigHandle: rigHandle,
+			})
 		}
 		cached = ids
 		cachedAt = time.Now()
