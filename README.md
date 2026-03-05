@@ -13,7 +13,7 @@ sovereign fork of a shared commons database containing the wanted board
 Install [Dolt](https://docs.dolthub.com/introduction/installation), then grab the `wl` binary:
 
 ```bash
-curl -fsSL https://github.com/julianknutsen/wasteland/releases/download/v0.3.0/wasteland_0.3.0_$(uname -s | tr A-Z a-z)_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz | tar xz
+curl -fsSL https://github.com/gastownhall/wasteland/releases/download/v0.3.0/wasteland_0.3.0_$(uname -s | tr A-Z a-z)_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz | tar xz
 sudo mv wl /usr/local/bin/
 ```
 
@@ -336,22 +336,22 @@ repos) or `--check` for a CI-friendly exit code.
 
 ### Binary (recommended)
 
-Download for your platform from the [v0.3.0 release page](https://github.com/julianknutsen/wasteland/releases/tag/v0.3.0), or use the curl one-liner from the quickstart above.
+Download for your platform from the [v0.3.0 release page](https://github.com/gastownhall/wasteland/releases/tag/v0.3.0), or use the curl one-liner from the quickstart above.
 
 Platform-specific URLs:
 
 ```bash
 # macOS (Apple Silicon)
-curl -fsSL https://github.com/julianknutsen/wasteland/releases/download/v0.3.0/wasteland_0.3.0_darwin_arm64.tar.gz | tar xz
+curl -fsSL https://github.com/gastownhall/wasteland/releases/download/v0.3.0/wasteland_0.3.0_darwin_arm64.tar.gz | tar xz
 
 # macOS (Intel)
-curl -fsSL https://github.com/julianknutsen/wasteland/releases/download/v0.3.0/wasteland_0.3.0_darwin_amd64.tar.gz | tar xz
+curl -fsSL https://github.com/gastownhall/wasteland/releases/download/v0.3.0/wasteland_0.3.0_darwin_amd64.tar.gz | tar xz
 
 # Linux (x86_64)
-curl -fsSL https://github.com/julianknutsen/wasteland/releases/download/v0.3.0/wasteland_0.3.0_linux_amd64.tar.gz | tar xz
+curl -fsSL https://github.com/gastownhall/wasteland/releases/download/v0.3.0/wasteland_0.3.0_linux_amd64.tar.gz | tar xz
 
 # Linux (ARM64)
-curl -fsSL https://github.com/julianknutsen/wasteland/releases/download/v0.3.0/wasteland_0.3.0_linux_arm64.tar.gz | tar xz
+curl -fsSL https://github.com/gastownhall/wasteland/releases/download/v0.3.0/wasteland_0.3.0_linux_arm64.tar.gz | tar xz
 ```
 
 Then `sudo mv wl /usr/local/bin/`.
@@ -582,4 +582,4 @@ No DoltHub account needed. Useful for local development and testing.
 
 [MIT](LICENSE)
 
-[![codecov](https://codecov.io/gh/julianknutsen/wasteland/graph/badge.svg?token=Y9TUUY5620)](https://codecov.io/gh/julianknutsen/wasteland)
+[![codecov](https://codecov.io/gh/gastownhall/wasteland/graph/badge.svg)](https://codecov.io/gh/gastownhall/wasteland)
