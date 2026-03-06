@@ -518,6 +518,7 @@ func (r *RemoteDB) pollOperation(operationName string) error {
 			// produced no changes (e.g. ON DUPLICATE KEY UPDATE with same
 			// values). Treat this as a no-op success.
 			if strings.Contains(strings.ToLower(err.Error()), "sqlwrite.tocommitid") {
+				slog.Debug("treating toCommitId-null as no-op success", "operation", operationName)
 				return nil
 			}
 			lastErr = err

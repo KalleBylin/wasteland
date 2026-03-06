@@ -7,4 +7,5 @@ web/node_modules/
 web/dist/*
 !web/dist/.gitkeep
 web/coverage/
+web/*.tsbuildinfo
 docs/production-checklist.md

@@ -97,6 +97,7 @@
 }
 
 .pendingIndicator {
+  all: unset;
   color: var(--brass);
   font-size: var(--text-xs);
   font-weight: 600;
@@ -107,7 +108,8 @@
   cursor: default;
 }
 
-.pendingIndicator:hover .pendingCard {
+.pendingIndicator:hover .pendingCard,
+.pendingIndicator:focus-within .pendingCard {
   display: block;
 }
 

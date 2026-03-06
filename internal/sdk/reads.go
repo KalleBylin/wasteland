@@ -16,11 +16,6 @@ type PendingItem struct {
 	Evidence    string // from fork branch completions table
 }
 
-// stateRank defines lifecycle ordering for furthest-future state overlay.
-var stateRank = map[string]int{
-	"open": 0, "claimed": 1, "in_review": 2, "completed": 3,
-}
-
 // BrowseResult holds the items returned by Browse along with branch metadata.
 type BrowseResult struct {
 	Items           []commons.WantedSummary
@@ -67,21 +62,13 @@ func (c *Client) Browse(filter commons.BrowseFilter) (*BrowseResult, error) {
 		}
 	}
 
-	// Overlay furthest upstream state onto items.
+	// Overlay claimed_by to reflect pending upstream candidates.
 	for i := range items {
 		pending := upstreamItems[items[i].ID]
 		if len(pending) == 0 {
 			continue
 		}
-		// Find the PR with the furthest-future state.
 		best := pending[0]
-		for _, p := range pending[1:] {
-			if stateRank[p.Status] > stateRank[best.Status] {
-				best = p
-			}
-		}
-		// Overlay claimed_by to reflect the full set of candidates
-		// (main claimer + upstream PRs).
 		totalCandidates := len(pending)
 		if items[i].ClaimedBy != "" {
 			totalCandidates++
