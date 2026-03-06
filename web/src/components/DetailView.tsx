@@ -472,16 +472,27 @@ export function DetailView() {
         </Section>
       )}
 
-      {(actions.length > 0 || branchActions.length > 0) && (
-        <div className={styles.actions}>
-          {actions.map((action) => (
-            <ActionButton key={action} action={action} onAction={async () => onActionClick(action)} />
-          ))}
-          {branchActions.map((action) => (
-            <ActionButton key={action} action={action.replace("_", " ")} onAction={async () => onActionClick(action)} />
-          ))}
-        </div>
-      )}
+      {(() => {
+        const submissionActions = new Set(["accept", "reject", "close"]);
+        const hasSubmissions = upstream_prs && upstream_prs.length > 0;
+        const filteredActions = hasSubmissions ? actions.filter((a) => !submissionActions.has(a)) : actions;
+        return (
+          (filteredActions.length > 0 || branchActions.length > 0) && (
+            <div className={styles.actions}>
+              {filteredActions.map((action) => (
+                <ActionButton key={action} action={action} onAction={async () => onActionClick(action)} />
+              ))}
+              {branchActions.map((action) => (
+                <ActionButton
+                  key={action}
+                  action={action.replace("_", " ")}
+                  onAction={async () => onActionClick(action)}
+                />
+              ))}
+            </div>
+          )
+        );
+      })()}
 
       {showEditForm && (
         <WantedForm
