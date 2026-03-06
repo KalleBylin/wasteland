@@ -71,7 +71,7 @@ func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=30")
+	w.Header().Set("Cache-Control", s.cacheControl())
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(data); err != nil {
 		slog.Warn("failed to write browse response", "error", err)
@@ -113,11 +113,20 @@ func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=30")
+	w.Header().Set("Cache-Control", s.cacheControl())
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(data); err != nil {
 		slog.Warn("failed to write detail response", "error", err)
 	}
+}
+
+// cacheControl returns the appropriate Cache-Control header value.
+// Hosted mode uses private caching since responses vary per user.
+func (s *Server) cacheControl() string {
+	if s.hosted {
+		return "private, max-age=15, stale-while-revalidate=30"
+	}
+	return "public, max-age=15, stale-while-revalidate=30"
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {

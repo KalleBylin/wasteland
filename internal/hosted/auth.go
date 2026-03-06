@@ -113,8 +113,10 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 		upstream := r.Header.Get("X-Wasteland")
 		upstreams := workspace.Upstreams()
 
-		if upstream == "" && len(upstreams) == 1 {
-			// Single-wasteland fallback for backward compat.
+		if upstream == "" && len(upstreams) > 0 && r.Method == http.MethodGet {
+			// Default to first upstream for reads when header is missing
+			// (race with frontend context init, impersonation, or
+			// single-wasteland backward compat).
 			upstream = upstreams[0].Upstream
 		}
 
