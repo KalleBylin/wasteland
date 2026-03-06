@@ -19,6 +19,14 @@ Sentry.init({
   tracesSampleRate: 0.2,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
+  beforeSend(event) {
+    // Drop errors from third-party scripts/fetches (e.g. Product Fruits, analytics).
+    const msg = event.exception?.values?.[0]?.value ?? "";
+    if (/\((?:.*\.productfruits\.com|.*\.analytics\.)|chrome-extension:/.test(msg)) {
+      return null;
+    }
+    return event;
+  },
 });
 
 createRoot(document.getElementById("root")!).render(
