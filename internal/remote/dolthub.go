@@ -811,12 +811,13 @@ func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[stri
 		}
 	}
 
-	// For entries at in_review or completed, query the fork branch's completions
+	// For entries past the claiming stage, query the fork branch's completions
 	// table to surface evidence from competing submissions.
 	completionQuery := "SELECT completed_by, COALESCE(evidence,'') as evidence FROM completions WHERE wanted_id='%s'"
+	noCompletions := map[string]bool{"open": true, "claimed": true}
 	for wantedID, states := range ids {
 		for i := range states {
-			if states[i].Status != "in_review" && states[i].Status != "completed" {
+			if noCompletions[states[i].Status] {
 				continue
 			}
 			owner := states[i].ForkOwner
