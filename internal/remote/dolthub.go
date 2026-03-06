@@ -664,9 +664,10 @@ func (d *DoltHubProvider) ListPendingWantedIDs(upstreamOrg, db string) (map[stri
 	var wg sync.WaitGroup
 	sem2 := make(chan struct{}, maxConcurrency)
 
-	// dolt_diff query: returns only rows the branch actually modified vs its
-	// own main. The to_* columns hold the branch's version of each changed row.
-	diffQuery := "SELECT COALESCE(to_id, from_id) as id, COALESCE(to_status, '') as status, COALESCE(to_claimed_by, '') as claimed_by, diff_type FROM dolt_diff('main', '%s', 'wanted')"
+	// dolt_diff query: returns only rows where status or claimed_by actually
+	// changed on the branch. Without the WHERE filter, updated_at drift from
+	// fork main syncs would produce false positives for every row.
+	diffQuery := "SELECT COALESCE(to_id, from_id) as id, COALESCE(to_status, '') as status, COALESCE(to_claimed_by, '') as claimed_by, diff_type FROM dolt_diff('main', '%s', 'wanted') WHERE diff_type <> 'modified' OR COALESCE(to_status,'') <> COALESCE(from_status,'') OR COALESCE(to_claimed_by,'') <> COALESCE(from_claimed_by,'')"
 	snapshotQuery := "SELECT id, status, COALESCE(claimed_by, '') as claimed_by FROM wanted"
 
 	for _, pr := range prs {
