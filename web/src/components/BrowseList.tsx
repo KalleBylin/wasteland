@@ -235,9 +235,9 @@ function PendingIndicator({ count, items }: { count: number; items?: PendingItem
       {count > 1 && <span className={styles.pendingCount}>&times;{count}</span>}
       {items && items.length > 0 && (
         <span className={styles.pendingCard}>
-          <div className={styles.pendingCardTitle}>Competing submissions</div>
+          <span className={styles.pendingCardTitle}>Competing submissions</span>
           {items.map((p, i) => (
-            <div key={i} className={styles.pendingCardRow}>
+            <span key={i} className={styles.pendingCardRow}>
               <span className={styles.pendingCardHandle}>{p.rig_handle}</span>
               {p.status && <span className={styles.pendingCardStatus}>{p.status.replace("_", " ")}</span>}
               {p.pr_url && (
@@ -250,7 +250,7 @@ function PendingIndicator({ count, items }: { count: number; items?: PendingItem
                   branch
                 </a>
               )}
-            </div>
+            </span>
           ))}
         </span>
       )}
