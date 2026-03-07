@@ -77,8 +77,11 @@ func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		}
 		// No stale data — return a 503 with a clear outage message.
 		msg := "Upstream database is temporarily unavailable — please try again in a moment."
+		if isTokenPermissionError(err) {
+			msg = "DoltHub API token lacks SQL permissions — check token configuration."
+		}
 		slog.Error("browse failed with no stale data", "error", err)
-		if !isTransientUpstreamError(err) {
+		if !isTransientUpstreamError(err) && !isTokenPermissionError(err) {
 			sentry.CaptureException(err)
 		}
 		writeJSON(w, http.StatusServiceUnavailable, ErrorResponse{Error: msg})
@@ -126,8 +129,11 @@ func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		msg := "Upstream database is temporarily unavailable — please try again in a moment."
+		if isTokenPermissionError(err) {
+			msg = "DoltHub API token lacks SQL permissions — check token configuration."
+		}
 		slog.Error("detail failed with no stale data", "error", err)
-		if !isTransientUpstreamError(err) {
+		if !isTransientUpstreamError(err) && !isTokenPermissionError(err) {
 			sentry.CaptureException(err)
 		}
 		writeJSON(w, http.StatusServiceUnavailable, ErrorResponse{Error: msg})
@@ -254,6 +260,13 @@ func isTransientUpstreamError(err error) bool {
 	return strings.Contains(err.Error(), "no such repository")
 }
 
+// isTokenPermissionError returns true if the error indicates the DoltHub API
+// token lacks the required permissions (e.g. SQL access). This is a persistent
+// configuration issue that won't self-resolve, so it should not flood Sentry.
+func isTokenPermissionError(err error) bool {
+	return strings.Contains(err.Error(), "API token is not allowed to operate on this resource")
+}
+
 // writeUpstreamError classifies DoltHub errors and writes an appropriate response:
 //   - "invalid authorization" → 401 (triggers frontend re-auth)
 //   - other upstream errors → 503 with sanitized message + Sentry capture
@@ -263,11 +276,14 @@ func writeUpstreamError(w http.ResponseWriter, err error, label string) {
 		return
 	}
 	slog.Error(label+" failed", "error", err)
-	if !isTransientUpstreamError(err) {
+	if !isTransientUpstreamError(err) && !isTokenPermissionError(err) {
 		sentry.CaptureException(err)
 	}
-	writeError(w, http.StatusServiceUnavailable,
-		"Upstream database is temporarily unavailable — please try again in a moment.")
+	msg := "Upstream database is temporarily unavailable — please try again in a moment."
+	if isTokenPermissionError(err) {
+		msg = "DoltHub API token lacks SQL permissions — check token configuration."
+	}
+	writeError(w, http.StatusServiceUnavailable, msg)
 }
 
 // writeMutationError writes a 409 for ConflictError, 400 for everything else.
