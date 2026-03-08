@@ -1,0 +1,38 @@
+name: Deploy Notification
+
+on:
+  push:
+    branches: [production]
+
+jobs:
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Get commit info
+        id: info
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "message=$(git log -1 --pretty=%s)" >> "$GITHUB_OUTPUT"
+          echo "author=$(git log -1 --pretty=%an)" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -fsSL -H "Content-Type: application/json" -d "{
+            \"embeds\": [{
+              \"title\": \"Wasteland deployed to production\",
+              \"description\": \"\`${{ steps.info.outputs.short_sha }}\` ${{ steps.info.outputs.message }}\",
+              \"color\": 5025616,
+              \"fields\": [
+                {\"name\": \"Author\", \"value\": \"${{ steps.info.outputs.author }}\", \"inline\": true},
+                {\"name\": \"Branch\", \"value\": \"production\", \"inline\": true}
+              ],
+              \"url\": \"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\"
+            }]
+          }" "$DISCORD_WEBHOOK"
