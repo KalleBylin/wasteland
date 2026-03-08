@@ -16,25 +16,22 @@ jobs:
       - name: Build commit summary
         id: info
         run: |
-          # Compare against the previous production tip (before this push)
           BEFORE="${{ github.event.before }}"
           HEAD="${{ github.sha }}"
           SHORT_HEAD="$(git rev-parse --short HEAD)"
 
           if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            # First push to production — just show the HEAD commit
-            LOG="$(git log -1 --pretty='• \`%h\` %s (%an)')"
+            LOG="$(git log -1 --pretty='%h %s (%an)')"
             COUNT=1
           else
             COUNT="$(git rev-list --count "${BEFORE}..${HEAD}")"
-            LOG="$(git log --pretty='• \`%h\` %s (%an)' "${BEFORE}..${HEAD}" | head -15)"
+            LOG="$(git log --pretty='%h %s (%an)' "${BEFORE}..${HEAD}" | head -15)"
             if [ "$COUNT" -gt 15 ]; then
               LOG="${LOG}
-…and $((COUNT - 15)) more"
+          ...and $((COUNT - 15)) more"
             fi
           fi
 
-          # Write multiline output
           {
             echo "log<<DELIM"
             echo "$LOG"
@@ -46,20 +43,24 @@ jobs:
       - name: Notify Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DEPLOY_LOG: ${{ steps.info.outputs.log }}
+          COMMIT_COUNT: ${{ steps.info.outputs.count }}
+          SHORT_SHA: ${{ steps.info.outputs.short_sha }}
+          COMPARE_URL: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}
         run: |
           jq -n \
             --arg title "Wasteland deployed to production" \
-            --arg desc "${{ steps.info.outputs.log }}" \
-            --arg count "${{ steps.info.outputs.count }} commit(s)" \
-            --arg sha "${{ steps.info.outputs.short_sha }}" \
-            --arg url "https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" \
+            --arg desc "$DEPLOY_LOG" \
+            --arg count "$COMMIT_COUNT commit(s)" \
+            --arg sha "$SHORT_SHA" \
+            --arg url "$COMPARE_URL" \
             '{embeds: [{
               title: $title,
               description: $desc,
               color: 5025616,
               fields: [
                 {name: "Commits", value: $count, inline: true},
-                {name: "Head", value: ("`" + $sha + "`"), inline: true}
+                {name: "Head", value: $sha, inline: true}
               ],
               url: $url
             }]}' | curl -fsSL -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK"
